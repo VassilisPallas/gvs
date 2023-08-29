@@ -26,9 +26,11 @@ type FileInformation struct {
 }
 
 type VersionInfo struct {
-	Version string            `json:"version"`
-	Stable  bool              `json:"stable"`
-	Files   []FileInformation `json:"files"`
+	Version          string            `json:"version"`
+	Stable           bool              `json:"stable"`
+	Files            []FileInformation `json:"files"`
+	UsedVersion      bool
+	AlreadyInstalled bool
 }
 
 var (
@@ -37,6 +39,60 @@ var (
 
 func init() {
 	Client = &http.Client{}
+}
+
+func (vi *VersionInfo) AddExtras() {
+
+	if files.DirectoryExists(vi.Version) {
+		vi.AlreadyInstalled = true
+	}
+
+	if files.GetRecentVersion() == vi.Version {
+		vi.UsedVersion = true
+	}
+}
+
+func (vi VersionInfo) GetPromptName() string {
+	stable := "unstable"
+	if vi.Stable {
+		stable = "stable"
+	}
+
+	message := fmt.Sprintf("%s (%s)", getCleanVersionName(vi.Version), stable)
+
+	if vi.AlreadyInstalled && !vi.UsedVersion {
+		message += " - alrady downloaded"
+	}
+
+	if vi.UsedVersion {
+		message += " - current version"
+	}
+
+	return message
+}
+
+func (vi VersionInfo) Install(os string, arch string, downloadURL string) {
+	if vi.AlreadyInstalled {
+		install.ExistingVersion(vi.Version)
+	} else {
+		var fileName string
+		var checksum string
+
+		for _, file := range vi.Files {
+			if file.Architecture == arch && file.OS == os && file.Kind == "archive" {
+				fileName = file.Filename
+				checksum = file.Checksum
+			}
+		}
+
+		if fileName == "" {
+			panic(fmt.Errorf("installer not found for %s-%s.", os, arch))
+		}
+
+		install.NewVersion(downloadURL, fileName, checksum, vi.Version)
+	}
+
+	fmt.Printf("%s version is installed!\n", getCleanVersionName(vi.Version))
 }
 
 func getCleanVersionName(version string) string {
@@ -68,7 +124,7 @@ func fetchVersions(url string, versionsChannel chan<- []byte) {
 	versionsChannel <- body
 }
 
-func GetVersions(url string, forceFetchVersions bool) []VersionInfo {
+func GetVersions(url string, forceFetchVersions bool) []*VersionInfo {
 	var byte_versions []byte
 
 	if files.AreVersionsCached() || forceFetchVersions {
@@ -90,15 +146,19 @@ func GetVersions(url string, forceFetchVersions bool) []VersionInfo {
 		}
 	}
 
-	var versions []VersionInfo
+	var versions []*VersionInfo
 	if err := json.Unmarshal(byte_versions, &versions); err != nil {
 		panic(err)
+	}
+
+	for _, vi := range versions {
+		vi.AddExtras()
 	}
 
 	return versions
 }
 
-func GetLatestVersion(vis []VersionInfo) int {
+func GetLatestVersion(vis []*VersionInfo) int {
 	for i, vi := range vis {
 		if vi.Stable {
 			return i
@@ -108,41 +168,29 @@ func GetLatestVersion(vis []VersionInfo) int {
 	return -1
 }
 
-func (vi VersionInfo) GetPromptName() string {
-	stable := "unstable"
-	if vi.Stable {
-		stable = "stable"
+func FilterAlreadyDownloadedVersions(vis []*VersionInfo) []string {
+	installedVersions := make([]string, 0, len(vis))
+
+	for _, vi := range vis {
+		if vi.AlreadyInstalled {
+			installedVersions = append(installedVersions, vi.Version)
+		}
 	}
 
-	message := fmt.Sprintf("%s (%s)", getCleanVersionName(vi.Version), stable)
-
-	if files.GetRecentVersion() == vi.Version {
-		message += " - current version"
-	}
-
-	return message
+	return installedVersions
 }
 
-func (vi VersionInfo) Install(os string, arch string, downloadURL string) {
-	if files.VersionExists(vi.Version) {
-		install.ExistingVersion(vi.Version)
-	} else {
-		var fileName string
-		var checksum string
+func DeleteUnusedVersions(versions []string) {
+	usedVersion := files.GetRecentVersion()
 
-		for _, file := range vi.Files {
-			if file.Architecture == arch && file.OS == os && file.Kind == "archive" {
-				fileName = file.Filename
-				checksum = file.Checksum
-			}
-		}
-
-		if fileName == "" {
-			panic(fmt.Errorf("installer not found for %s-%s.", os, arch))
-		}
-
-		install.NewVersion(downloadURL, fileName, checksum, vi.Version)
+	if usedVersion == "" {
+		panic(fmt.Errorf("There is no any installed version"))
 	}
 
-	fmt.Printf("%s version is installed!\n", getCleanVersionName(vi.Version))
+	for _, version := range versions {
+		fmt.Printf("Deleting %s \n", version)
+		if version != usedVersion {
+			files.DeleteDirectory(version)
+		}
+	}
 }

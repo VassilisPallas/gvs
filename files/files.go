@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	appDir              string = ".gvs"
-	versionResponseFile string = "goVersions.json"
-	tarFileName         string = "downloaded.tar.gz"
-	goVersionsDir       string = ".go.versions"
-	binDir              string = "bin"
+	appDir                 string = ".gvs"
+	versionResponseFile    string = "goVersions.json"
+	tarFileName            string = "downloaded.tar.gz"
+	goVersionsDir          string = ".go.versions"
+	binDir                 string = "bin"
+	currentVersionFileName string = "CURRENT"
 )
 
 func getBaseDir() string {
@@ -56,7 +57,7 @@ func getBinDir() string {
 }
 
 func getCurrentVersionFile() string {
-	return fmt.Sprintf("/%s/CURRENT", getVersionsDir())
+	return fmt.Sprintf("/%s/%s", getVersionsDir(), currentVersionFileName)
 }
 
 func CreateInitFiles() {
@@ -250,7 +251,7 @@ func GetRecentVersion() string {
 	return string(content)
 }
 
-func VersionExists(goVersion string) bool {
+func DirectoryExists(goVersion string) bool {
 	target := getVersionsDir()
 
 	if _, err := os.Stat(fmt.Sprintf("%s/%s", target, goVersion)); !os.IsNotExist(err) {
@@ -258,4 +259,12 @@ func VersionExists(goVersion string) bool {
 	}
 
 	return false
+}
+
+func DeleteDirectory(dirName string) {
+	target := getVersionsDir()
+	err := os.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
+	if err != nil {
+		panic(err)
+	}
 }

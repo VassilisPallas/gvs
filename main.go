@@ -13,6 +13,7 @@ import (
 var (
 	refreshVersions = false
 	installLatest   = false
+	deleteUnused    = false
 )
 
 func init() {
@@ -20,16 +21,23 @@ func init() {
 
 	flag.BoolVar(&refreshVersions, "refresh-versions", false, "Fetch again go versions in case the cached ones are stale")
 	flag.BoolVar(&installLatest, "latest", false, "Install latest stable version")
+	flag.BoolVar(&deleteUnused, "delete-unused", false, "Delete all unused versions")
 	flag.Parse()
 }
 
 func main() {
 	config := cf.GetConfig()
+
 	versions := version.GetVersions(config.VERSIONS_URL, refreshVersions)
+
+	if deleteUnused {
+		version.DeleteUnusedVersions(version.FilterAlreadyDownloadedVersions(versions))
+		return
+	}
 
 	var promptVersions []string
 	for _, version := range versions {
-		promptVersions = append(promptVersions, (&version).GetPromptName())
+		promptVersions = append(promptVersions, version.GetPromptName())
 	}
 
 	var selectedIndex int
