@@ -61,7 +61,7 @@ func (vi VersionInfo) GetPromptName() string {
 	message := fmt.Sprintf("%s (%s)", getCleanVersionName(vi.Version), stable)
 
 	if vi.AlreadyInstalled && !vi.UsedVersion {
-		message += " - alrady downloaded"
+		message += " - already downloaded"
 	}
 
 	if vi.UsedVersion {
@@ -193,4 +193,5 @@ func DeleteUnusedVersions(versions []string) {
 			files.DeleteDirectory(version)
 		}
 	}
+	fmt.Println("All the unused deleted!")
 }

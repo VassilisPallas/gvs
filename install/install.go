@@ -73,6 +73,7 @@ func NewVersion(baseURL string, fileName string, checksum string, goVersionName 
 		panic(err)
 	}
 
+	fmt.Println("Compare Checksums...")
 	if err := compareChecksums(checksum); err != nil {
 		panic(err)
 	}
