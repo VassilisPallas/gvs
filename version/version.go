@@ -188,10 +188,10 @@ func DeleteUnusedVersions(versions []string) {
 	}
 
 	for _, version := range versions {
-		fmt.Printf("Deleting %s \n", version)
 		if version != usedVersion {
+			fmt.Printf("Deleting %s \n", version)
 			files.DeleteDirectory(version)
 		}
 	}
-	fmt.Println("All the unused deleted!")
+	fmt.Println("All the unused version are deleted!")
 }

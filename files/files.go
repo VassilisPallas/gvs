@@ -147,18 +147,23 @@ func UnzipTarFile() error {
 		info := header.FileInfo()
 
 		if info.IsDir() {
-			if err := os.MkdirAll(path, 0770); err != nil {
+			if err := os.MkdirAll(path, info.Mode()); err != nil {
 				return err
 			}
 
 			continue
 		} else {
-			if err := os.MkdirAll(filepath.Dir(path), 0770); err != nil {
+			// This is happening only on 1.21.0. The directories are not
+			// able to be found and instead the files contain the whole path
+			// instead of just their name. This creates any missing directories
+			// that exist on the file path. The permissions also are updated to
+			// match the directory permissions from the previous versions
+			if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 				return err
 			}
 		}
 
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 777)
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
 			return err
 		}
