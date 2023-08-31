@@ -14,6 +14,7 @@ var (
 	refreshVersions = false
 	installLatest   = false
 	deleteUnused    = false
+	showAllVersions = false
 )
 
 func init() {
@@ -22,6 +23,7 @@ func init() {
 	flag.BoolVar(&refreshVersions, "refresh-versions", false, "Fetch again go versions in case the cached ones are stale")
 	flag.BoolVar(&installLatest, "latest", false, "Install latest stable version")
 	flag.BoolVar(&deleteUnused, "delete-unused", false, "Delete all unused versions")
+	flag.BoolVar(&showAllVersions, "all", false, "Show both stable and unstable versions")
 	flag.Parse()
 }
 
@@ -37,7 +39,9 @@ func main() {
 
 	var promptVersions []string
 	for _, version := range versions {
-		promptVersions = append(promptVersions, version.GetPromptName())
+		if showAllVersions || (!showAllVersions && version.Stable) {
+			promptVersions = append(promptVersions, version.GetPromptName(showAllVersions))
+		}
 	}
 
 	var selectedIndex int

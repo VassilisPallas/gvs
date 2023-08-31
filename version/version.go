@@ -52,13 +52,17 @@ func (vi *VersionInfo) AddExtras() {
 	}
 }
 
-func (vi VersionInfo) GetPromptName() string {
-	stable := "unstable"
-	if vi.Stable {
-		stable = "stable"
-	}
+func (vi VersionInfo) GetPromptName(showStable bool) string {
+	message := getCleanVersionName(vi.Version)
 
-	message := fmt.Sprintf("%s (%s)", getCleanVersionName(vi.Version), stable)
+	if showStable {
+		stable := "unstable"
+		if vi.Stable {
+			stable = "stable"
+		}
+
+		message = fmt.Sprintf("%s (%s)", message, stable)
+	}
 
 	if vi.AlreadyInstalled && !vi.UsedVersion {
 		message += " - already downloaded"
