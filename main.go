@@ -27,39 +27,38 @@ func init() {
 	flag.Parse()
 }
 
-func main() {
-	config := cf.GetConfig()
-
-	versions := version.GetVersions(config.VERSIONS_URL, refreshVersions)
-
-	if deleteUnused {
-		version.DeleteUnusedVersions(version.FilterAlreadyDownloadedVersions(versions))
-		return
-	}
-
+func getFilteredVersions(versions []*version.VersionInfo, onlyStable bool) []string {
 	var promptVersions []string
 	for _, version := range versions {
 		if showAllVersions || (!showAllVersions && version.Stable) {
 			promptVersions = append(promptVersions, version.GetPromptName(showAllVersions))
 		}
 	}
+	return promptVersions
+}
 
-	var selectedIndex int
-	if installLatest {
-		selectedIndex = version.GetLatestVersion(versions)
-	} else {
+func main() {
+	config := cf.GetConfig()
+
+	versions := version.GetVersions(config.VERSIONS_URL, refreshVersions)
+
+	switch {
+	case deleteUnused:
+		version.DeleteUnusedVersions(version.FilterAlreadyDownloadedVersions(versions))
+	case installLatest:
+		selectedIndex := version.GetLatestVersion(versions)
+		versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.DOWNLOAD_VERSION_BASE_URL)
+	default:
 		prompt := promptui.Select{
 			Label: "Select go version",
-			Items: promptVersions,
+			Items: getFilteredVersions(versions, showAllVersions),
 			Size:  10,
 		}
 
-		var errPrompt error
-		selectedIndex, _, errPrompt = prompt.Run()
+		selectedIndex, _, errPrompt := prompt.Run()
 		if errPrompt != nil {
 			panic(errPrompt)
 		}
+		versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.DOWNLOAD_VERSION_BASE_URL)
 	}
-
-	versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.DOWNLOAD_VERSION_BASE_URL)
 }
