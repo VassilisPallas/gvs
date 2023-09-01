@@ -27,7 +27,7 @@ type FileInformation struct {
 
 type VersionInfo struct {
 	Version          string            `json:"version"`
-	Stable           bool              `json:"stable"`
+	IsStable         bool              `json:"stable"`
 	Files            []FileInformation `json:"files"`
 	UsedVersion      bool
 	AlreadyInstalled bool
@@ -57,7 +57,7 @@ func (vi VersionInfo) GetPromptName(showStable bool) string {
 
 	if showStable {
 		stable := "unstable"
-		if vi.Stable {
+		if vi.IsStable {
 			stable = "stable"
 		}
 
@@ -103,7 +103,8 @@ func getCleanVersionName(version string) string {
 	return strings.TrimPrefix(version, "go")
 }
 
-func fetchVersions(url string, versionsChannel chan<- []byte) {
+func fetchVersions(baseURL string, versionsChannel chan<- []byte) {
+	url := fmt.Sprintf("%s/?mode=json&include=all", baseURL)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		panic(err)
@@ -128,7 +129,17 @@ func fetchVersions(url string, versionsChannel chan<- []byte) {
 	versionsChannel <- body
 }
 
-func GetVersions(url string, forceFetchVersions bool) []*VersionInfo {
+func filterVersions(versions []*VersionInfo, showAllVersions bool) []*VersionInfo {
+	var filteredVersions []*VersionInfo
+	for _, version := range versions {
+		if showAllVersions || (!showAllVersions && version.IsStable) {
+			filteredVersions = append(filteredVersions, version)
+		}
+	}
+	return filteredVersions
+}
+
+func GetVersions(url string, forceFetchVersions bool, showAllVersions bool) []*VersionInfo {
 	var byte_versions []byte
 
 	if files.AreVersionsCached() || forceFetchVersions {
@@ -159,12 +170,12 @@ func GetVersions(url string, forceFetchVersions bool) []*VersionInfo {
 		vi.AddExtras()
 	}
 
-	return versions
+	return filterVersions(versions, showAllVersions)
 }
 
 func GetLatestVersion(vis []*VersionInfo) int {
 	for i, vi := range vis {
-		if vi.Stable {
+		if vi.IsStable {
 			return i
 		}
 	}
@@ -184,18 +195,21 @@ func FilterAlreadyDownloadedVersions(vis []*VersionInfo) []string {
 	return installedVersions
 }
 
-func DeleteUnusedVersions(versions []string) {
+func DeleteUnusedVersions(versions []string) int {
 	usedVersion := files.GetRecentVersion()
 
 	if usedVersion == "" {
 		panic(fmt.Errorf("There is no any installed version"))
 	}
 
+	count := 0
 	for _, version := range versions {
 		if version != usedVersion {
+			count++
 			fmt.Printf("Deleting %s \n", version)
 			files.DeleteDirectory(version)
 		}
 	}
-	fmt.Println("All the unused version are deleted!")
+
+	return count
 }

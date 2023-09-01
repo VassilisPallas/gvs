@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"runtime"
 
 	cf "github.com/VassilisPallas/gvs/config"
@@ -27,31 +28,31 @@ func init() {
 	flag.Parse()
 }
 
-func getFilteredVersions(versions []*version.VersionInfo, onlyStable bool) []string {
-	var promptVersions []string
-	for _, version := range versions {
-		if showAllVersions || (!showAllVersions && version.Stable) {
-			promptVersions = append(promptVersions, version.GetPromptName(showAllVersions))
-		}
-	}
-	return promptVersions
-}
-
 func main() {
 	config := cf.GetConfig()
 
-	versions := version.GetVersions(config.VERSIONS_URL, refreshVersions)
+	versions := version.GetVersions(config.GO_BASE_URL, refreshVersions, showAllVersions || deleteUnused)
 
 	switch {
 	case deleteUnused:
-		version.DeleteUnusedVersions(version.FilterAlreadyDownloadedVersions(versions))
+		deleted_count := version.DeleteUnusedVersions(version.FilterAlreadyDownloadedVersions(versions))
+		if deleted_count > 0 {
+			fmt.Println("All the unused version are deleted!")
+		} else {
+			fmt.Println("Nothing to delete")
+		}
 	case installLatest:
 		selectedIndex := version.GetLatestVersion(versions)
-		versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.DOWNLOAD_VERSION_BASE_URL)
+		versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.GO_BASE_URL)
 	default:
+		var promptVersions []string
+		for _, version := range versions {
+			promptVersions = append(promptVersions, version.GetPromptName(showAllVersions))
+		}
+
 		prompt := promptui.Select{
 			Label: "Select go version",
-			Items: getFilteredVersions(versions, showAllVersions),
+			Items: promptVersions,
 			Size:  10,
 		}
 
@@ -59,6 +60,6 @@ func main() {
 		if errPrompt != nil {
 			panic(errPrompt)
 		}
-		versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.DOWNLOAD_VERSION_BASE_URL)
+		versions[selectedIndex].Install(runtime.GOOS, runtime.GOARCH, config.GO_BASE_URL)
 	}
 }
