@@ -1,192 +1,111 @@
 package version
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/install"
+
+	"github.com/VassilisPallas/gvs/api_client"
 )
 
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
+type Versioner interface {
+	GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error)
+	DeleteUnusedVersions(evs []*ExtendedVersion) (int, error)
+	GetLatestVersion(evs []*ExtendedVersion) int
+	Install(ev *ExtendedVersion, os string, arch string, downloadURL string) error
+	GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool) []*ExtendedVersion
+
+	filterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string
 }
 
-type FileInformation struct {
-	Filename     string `json:"filename"`
-	OS           string `json:"os"`
-	Architecture string `json:"arch"`
-	Version      string `json:"version"`
-	Checksum     string `json:"sha256"`
-	Size         int    `json:"size"`
-	Kind         string `json:"kind"`
+type Version struct {
+	fileUtils files.FileUtils
+	installer install.Installer
+	clientAPI api_client.GoClientAPI
+	helper    VersionHelper
+
+	Versioner
 }
 
-type VersionInfo struct {
-	Version          string            `json:"version"`
-	IsStable         bool              `json:"stable"`
-	Files            []FileInformation `json:"files"`
+type ExtendedVersion struct {
 	UsedVersion      bool
 	AlreadyInstalled bool
+
+	api_client.VersionInfo
 }
 
-var (
-	Client HTTPClient
-)
-
-func init() {
-	Client = &http.Client{}
-}
-
-func (vi *VersionInfo) AddExtras() {
-
-	if files.DirectoryExists(vi.Version) {
-		vi.AlreadyInstalled = true
+func (ev *ExtendedVersion) addExtras(helper VersionHelper) {
+	if helper.DirectoryExists(ev.Version) {
+		ev.AlreadyInstalled = true
 	}
 
-	if files.GetRecentVersion() == vi.Version {
-		vi.UsedVersion = true
+	if helper.GetRecentVersion() == ev.Version {
+		ev.UsedVersion = true
 	}
 }
 
-func (vi VersionInfo) GetPromptName(showStable bool) string {
-	message := getCleanVersionName(vi.Version)
+func (ev ExtendedVersion) GetPromptName(showStable bool) string {
+	message := ev.getCleanVersionName()
 
 	if showStable {
 		stable := "unstable"
-		if vi.IsStable {
+		if ev.IsStable {
 			stable = "stable"
 		}
 
 		message = fmt.Sprintf("%s (%s)", message, stable)
 	}
 
-	if vi.AlreadyInstalled && !vi.UsedVersion {
+	if ev.AlreadyInstalled && !ev.UsedVersion {
 		message += " - already downloaded"
 	}
 
-	if vi.UsedVersion {
+	if ev.UsedVersion {
 		message += " - current version"
 	}
 
 	return message
 }
 
-func (vi VersionInfo) Install(os string, arch string, downloadURL string) {
-	if vi.AlreadyInstalled {
-		install.ExistingVersion(vi.Version)
-	} else {
-		var fileName string
-		var checksum string
-
-		for _, file := range vi.Files {
-			if file.Architecture == arch && file.OS == os && file.Kind == "archive" {
-				fileName = file.Filename
-				checksum = file.Checksum
-			}
-		}
-
-		if fileName == "" {
-			panic(fmt.Errorf("installer not found for %s-%s.", os, arch))
-		}
-
-		install.NewVersion(downloadURL, fileName, checksum, vi.Version)
-	}
-
-	fmt.Printf("%s version is installed!\n", getCleanVersionName(vi.Version))
+func (ev ExtendedVersion) getCleanVersionName() string {
+	return strings.TrimPrefix(ev.Version, "go")
 }
 
-func getCleanVersionName(version string) string {
-	return strings.TrimPrefix(version, "go")
-}
+func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error) {
+	var responseVersions []api_client.VersionInfo
 
-func fetchVersions(baseURL string, versionsChannel chan<- []byte) {
-	url := fmt.Sprintf("%s/?mode=json&include=all", baseURL)
-	request, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	response, err := Client.Do(request)
-	if err != nil {
-		panic(err)
-	}
-
-	if response.StatusCode != 200 {
-		panic(err)
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	defer response.Body.Close()
-
-	versionsChannel <- body
-}
-
-func filterVersions(versions []*VersionInfo, showAllVersions bool) []*VersionInfo {
-	var filteredVersions []*VersionInfo
-	for _, version := range versions {
-		if showAllVersions || (!showAllVersions && version.IsStable) {
-			filteredVersions = append(filteredVersions, version)
-		}
-	}
-	return filteredVersions
-}
-
-func GetVersions(url string, forceFetchVersions bool, showAllVersions bool) []*VersionInfo {
-	var byte_versions []byte
-
-	if files.AreVersionsCached() || forceFetchVersions {
-		versionsChannel := make(chan []byte)
-
-		go fetchVersions(url, versionsChannel)
-
-		byte_versions = <-versionsChannel
-		close(versionsChannel)
-
-		if err := files.StoreVersionsResponse(byte_versions); err != nil {
-			panic(err)
-		}
-	} else {
-		var err error
-		byte_versions, err = files.GetVersionsResponse()
+	if v.helper.AreVersionsCached() || forceFetchVersions {
+		err := v.clientAPI.FetchVersions(context.TODO(), &responseVersions)
 		if err != nil {
-			panic(err)
+			return nil, err
+		}
+	} else {
+		err := v.helper.GetCachedResponse(&responseVersions)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	var versions []*VersionInfo
-	if err := json.Unmarshal(byte_versions, &versions); err != nil {
-		panic(err)
+	versions := make([]*ExtendedVersion, 0, len(responseVersions))
+	for _, rv := range responseVersions {
+		version := &ExtendedVersion{VersionInfo: rv}
+		version.addExtras(v.helper)
+
+		versions = append(versions, version)
 	}
 
-	for _, vi := range versions {
-		vi.AddExtras()
-	}
-
-	return filterVersions(versions, showAllVersions)
+	// release underlying array to gc
+	responseVersions = nil
+	return versions, nil
 }
 
-func GetLatestVersion(vis []*VersionInfo) int {
-	for i, vi := range vis {
-		if vi.IsStable {
-			return i
-		}
-	}
+func (v Version) filterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string {
+	installedVersions := make([]string, 0, len(evs))
 
-	return -1
-}
-
-func FilterAlreadyDownloadedVersions(vis []*VersionInfo) []string {
-	installedVersions := make([]string, 0, len(vis))
-
-	for _, vi := range vis {
+	for _, vi := range evs {
 		if vi.AlreadyInstalled {
 			installedVersions = append(installedVersions, vi.Version)
 		}
@@ -195,21 +114,85 @@ func FilterAlreadyDownloadedVersions(vis []*VersionInfo) []string {
 	return installedVersions
 }
 
-func DeleteUnusedVersions(versions []string) int {
-	usedVersion := files.GetRecentVersion()
+func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
+	versions := v.filterAlreadyDownloadedVersions(evs)
+	usedVersion := v.helper.GetRecentVersion()
 
 	if usedVersion == "" {
-		panic(fmt.Errorf("There is no any installed version"))
+		return -1, fmt.Errorf("There is no any installed version")
 	}
 
 	count := 0
 	for _, version := range versions {
 		if version != usedVersion {
-			count++
+
 			fmt.Printf("Deleting %s \n", version)
-			files.DeleteDirectory(version)
+			if err := v.helper.DeleteDirectory(version); err != nil {
+				return count, fmt.Errorf("An error occurred while deleting %s: %s", version, err.Error())
+			}
+
+			count++
 		}
 	}
 
-	return count
+	return count, nil
+}
+
+func (v Version) GetLatestVersion(evs []*ExtendedVersion) int {
+	for i, vi := range evs {
+		if vi.IsStable {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (v Version) Install(ev *ExtendedVersion, os string, arch string, downloadURL string) error {
+	if ev.AlreadyInstalled {
+		err := v.installer.ExistingVersion(ev.Version)
+		if err != nil {
+			return err
+		}
+	} else {
+		var fileName string
+		var checksum string
+
+		for _, file := range ev.Files {
+			if file.Architecture == arch && file.OS == os && file.Kind == "archive" {
+				fileName = file.Filename
+				checksum = file.Checksum
+			}
+		}
+
+		if fileName == "" {
+			return fmt.Errorf("installer not found for %s-%s.", os, arch)
+		}
+
+		v.installer.NewVersion(context.TODO(), fileName, checksum, ev.Version)
+	}
+
+	fmt.Printf("%s version is installed!\n", ev.getCleanVersionName())
+
+	return nil
+}
+
+func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool) []*ExtendedVersion {
+	var filteredVersions []*ExtendedVersion
+	for _, version := range evs {
+		if showAllVersions || (!showAllVersions && version.IsStable) {
+			filteredVersions = append(filteredVersions, version)
+		}
+	}
+	return filteredVersions
+}
+
+func New(fileUtils files.FileUtils, clientAPI api_client.GoClientAPI, installer install.Installer) Versioner {
+	helper := Helper{FileUtils: fileUtils}
+	return Version{
+		fileUtils: fileUtils,
+		installer: installer,
+		clientAPI: clientAPI,
+		helper:    helper,
+	}
 }

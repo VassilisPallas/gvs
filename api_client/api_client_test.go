@@ -134,7 +134,6 @@ func TestFetchVersionsUnmarshalFailed(t *testing.T) {
 
 	if err == nil {
 		t.Errorf("FetchVersions error should be '%s', instead got nil", err)
-		return
 	}
 }
 

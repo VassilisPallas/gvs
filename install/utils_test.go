@@ -1,4 +1,4 @@
-package install
+package install_test
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/VassilisPallas/gvs/install"
 	"github.com/VassilisPallas/gvs/internal/testutils"
 )
 
@@ -32,8 +33,8 @@ func TestCreateTarFile(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	fileContent := "foo"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -61,8 +62,8 @@ func TestCreateTarFileToPathThatDoesNotExist(t *testing.T) {
 	fileContent := "foo"
 	expectedError := "open /some_other_dst/some_file.tar.gz: no such file or directory"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -79,8 +80,8 @@ func TestCreateTarFileCopyFailed(t *testing.T) {
 	fileContent := "foo"
 	expectedError := "some error while copying"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -99,8 +100,8 @@ func TestGetTarChecksum(t *testing.T) {
 	fileContent := "foo"
 	expectedHash := "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -124,8 +125,8 @@ func TestGetTarChecksumFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	expectedError := "open /tmp/some_file.tar.gz: no such file or directory"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -145,8 +146,8 @@ func TestRenameGoDirectory(t *testing.T) {
 	dirLocation := "/tmp/some_dir"
 	goVersion := "go1.21.0"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			VersionDir: dirLocation,
 		},
 	}
@@ -170,8 +171,8 @@ func TestRemoveTarFile(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	fileContent := "foo"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -194,8 +195,8 @@ func TestRemoveTarFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	expectedError := "remove /tmp/some_file.tar.gz: no such file or directory"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			TarFile: fileLocation,
 		},
 	}
@@ -211,8 +212,8 @@ func TestUpdateRecentVersion(t *testing.T) {
 	fileLocation := "/tmp/CURRENT"
 	goVersion := "go1.21.0"
 
-	helper := Helper{
-		fileUtils: testutils.FakeFiler{
+	helper := install.Helper{
+		FileUtils: testutils.FakeFiler{
 			CurrentVersionFile: fileLocation,
 		},
 	}

@@ -1,17 +1,19 @@
 package testutils
 
 type FakeFiler struct {
-	TarFile            string
-	VersionDir         string
-	CurrentVersionFile string
+	TarFile                 string
+	VersionDir              string
+	CurrentVersionFile      string
+	AppDir                  string
+	VersionResponseFileName string
 }
 
 func (FakeFiler) CreateInitFiles() error {
 	return nil
 }
 
-func (FakeFiler) GetAppDir() string {
-	return ""
+func (ff FakeFiler) GetAppDir() string {
+	return ff.AppDir
 }
 
 func (ff FakeFiler) GetVersionsDir() string {
@@ -30,8 +32,8 @@ func (ff FakeFiler) GetCurrentVersionFile() string {
 	return ff.CurrentVersionFile
 }
 
-func (FakeFiler) GetVersionResponseFile() string {
-	return ""
+func (ff FakeFiler) GetVersionResponseFile() string {
+	return ff.VersionResponseFileName
 }
 
 func (FakeFiler) GetHomeDirectory() string {

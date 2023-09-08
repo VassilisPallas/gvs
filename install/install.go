@@ -93,6 +93,6 @@ func (i Install) ExistingVersion(goVersionName string) error {
 }
 
 func New(fileUtils files.FileUtils, clientAPI api_client.GoClientAPI) Installer {
-	helper := Helper{fileUtils: fileUtils}
+	helper := Helper{FileUtils: fileUtils}
 	return Install{FileUtils: fileUtils, ClientAPI: clientAPI, Helper: helper}
 }

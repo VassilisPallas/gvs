@@ -25,13 +25,13 @@ type InstallHelper interface {
 }
 
 type Helper struct {
-	fileUtils files.FileUtils
+	FileUtils files.FileUtils
 
 	InstallHelper
 }
 
 func (h Helper) CreateTarFile(content io.ReadCloser) error {
-	file, err := os.Create(h.fileUtils.GetTarFile())
+	file, err := os.Create(h.FileUtils.GetTarFile())
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (h Helper) CreateTarFile(content io.ReadCloser) error {
 
 func (h Helper) GetTarChecksum() (string, error) {
 	hasher := sha256.New()
-	path := h.fileUtils.GetTarFile()
+	path := h.FileUtils.GetTarFile()
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -65,9 +65,9 @@ func (h Helper) GetTarChecksum() (string, error) {
 
 // TODO: add tests
 func (h Helper) UnzipTarFile() error {
-	target := h.fileUtils.GetVersionsDir()
+	target := h.FileUtils.GetVersionsDir()
 
-	reader, err := os.Open(h.fileUtils.GetTarFile())
+	reader, err := os.Open(h.FileUtils.GetTarFile())
 	if err != nil {
 		return err
 	}
@@ -137,9 +137,9 @@ func (h Helper) UnzipTarFile() error {
 }
 
 func (h Helper) RenameGoDirectory(goVersionName string) error {
-	target := fmt.Sprintf("%s/%s", h.fileUtils.GetVersionsDir(), "go")
+	target := fmt.Sprintf("%s/%s", h.FileUtils.GetVersionsDir(), "go")
 
-	if err := os.Rename(target, fmt.Sprintf("%s/%s", h.fileUtils.GetVersionsDir(), goVersionName)); err != nil {
+	if err := os.Rename(target, fmt.Sprintf("%s/%s", h.FileUtils.GetVersionsDir(), goVersionName)); err != nil {
 		return err
 	}
 
@@ -147,7 +147,7 @@ func (h Helper) RenameGoDirectory(goVersionName string) error {
 }
 
 func (h Helper) RemoveTarFile() error {
-	err := os.Remove(h.fileUtils.GetTarFile())
+	err := os.Remove(h.FileUtils.GetTarFile())
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (h Helper) RemoveTarFile() error {
 
 // TODO: add tests
 func (h Helper) CreateExecutableSymlink(goVersionName string) error {
-	target := fmt.Sprintf("%s/%s/bin", h.fileUtils.GetVersionsDir(), goVersionName)
+	target := fmt.Sprintf("%s/%s/bin", h.FileUtils.GetVersionsDir(), goVersionName)
 
 	files, err := os.ReadDir(target)
 	if err != nil {
@@ -165,7 +165,7 @@ func (h Helper) CreateExecutableSymlink(goVersionName string) error {
 
 	for _, f := range files {
 		newFile := fmt.Sprintf("%s/%s", target, f.Name())
-		link := fmt.Sprintf("%s/%s", h.fileUtils.GetBinDir(), f.Name())
+		link := fmt.Sprintf("%s/%s", h.FileUtils.GetBinDir(), f.Name())
 
 		if _, err := os.Lstat(link); err == nil {
 			os.Remove(link)
@@ -181,7 +181,7 @@ func (h Helper) CreateExecutableSymlink(goVersionName string) error {
 }
 
 func (h Helper) UpdateRecentVersion(goVersionName string) error {
-	path := h.fileUtils.GetCurrentVersionFile()
+	path := h.FileUtils.GetCurrentVersionFile()
 
 	file, err := os.Create(path)
 	if err != nil {
