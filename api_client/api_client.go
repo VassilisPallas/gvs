@@ -1,23 +1,30 @@
-package client
+package api_client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/VassilisPallas/gvs/config"
 )
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-type GoRepositoryAPI interface {
-	FetchVersions(url string, v *[]VersionInfo) error
-	DownloadVersion(url string, cb func(body io.Reader) error) error
+type GoClientAPI interface {
+	FetchVersions(ctx context.Context, v *[]VersionInfo) error
+	DownloadVersion(ctx context.Context, filename string, cb func(body io.ReadCloser) error) error
 }
 
 type Go struct {
-	client HTTPClient
+	Client HTTPClient
+	Config config.Configuration
+
+	GoClientAPI
 }
 
 type FileInformation struct {
@@ -36,13 +43,16 @@ type VersionInfo struct {
 	Files    []FileInformation `json:"files"`
 }
 
-func (g *Go) FetchVersions(url string, v *[]VersionInfo) error {
-	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/?mode=json&include=all", url), nil)
+// TODO: add more tests for config, like url, timeout and ctx cancel etc
+
+func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
+	// TODO: write test for that
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/?mode=json&include=all", g.Config.GO_BASE_URL), nil)
 	if err != nil {
 		return err
 	}
 
-	response, err := g.client.Do(request)
+	response, err := g.Client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -64,13 +74,15 @@ func (g *Go) FetchVersions(url string, v *[]VersionInfo) error {
 	return nil
 }
 
-func (g *Go) DownloadVersion(url string, cb func(body io.Reader) error) error {
-	request, err := http.NewRequest(http.MethodGet, url, nil)
+func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body io.ReadCloser) error) error {
+	// TODO: write test for that
+	url := fmt.Sprintf("%s/%s", g.Config.GO_BASE_URL, filename)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
 
-	response, err := g.client.Do(request)
+	response, err := g.Client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -87,6 +99,8 @@ func (g *Go) DownloadVersion(url string, cb func(body io.Reader) error) error {
 	return nil
 }
 
-func New() GoRepositoryAPI {
-	return &Go{client: &http.Client{}}
+func New(config config.Configuration) GoClientAPI {
+	return Go{Client: &http.Client{
+		Timeout: time.Duration(config.REQUEST_TIMEOUT) * time.Second,
+	}, Config: config}
 }

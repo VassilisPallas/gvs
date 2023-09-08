@@ -1,28 +1,33 @@
 package files
 
 import (
-	"archive/tar"
-	"compress/gzip"
-	"crypto/sha256"
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"os/user"
-	"path/filepath"
-	"time"
 )
 
-const (
-	appDir                 string = ".gvs"
-	versionResponseFile    string = "goVersions.json"
-	tarFileName            string = "downloaded.tar.gz"
-	goVersionsDir          string = ".go.versions"
-	binDir                 string = "bin"
-	currentVersionFileName string = "CURRENT"
-)
+type FileUtils interface {
+	GetHomeDirectory() string
+	GetAppDir() string
+	GetVersionsDir() string
+	GetTarFile() string
+	GetBinDir() string
+	GetCurrentVersionFile() string
+	GetVersionResponseFile() string
+	CreateInitFiles() error
+}
 
-func getBaseDir() string {
+type Files struct {
+	appDir                 string
+	versionResponseFile    string
+	tarFileName            string
+	goVersionsDir          string
+	binDir                 string
+	currentVersionFileName string
+
+	FileUtils
+}
+
+func (f Files) GetHomeDirectory() string {
 	user, err := user.Current()
 	if err != nil {
 		panic(err)
@@ -31,245 +36,51 @@ func getBaseDir() string {
 	return user.HomeDir
 }
 
-func getAppDir() string {
-	return fmt.Sprintf("%s/%s", getBaseDir(), appDir)
+func (f Files) GetAppDir() string {
+	return fmt.Sprintf("%s/%s", f.GetHomeDirectory(), f.appDir)
 }
 
-func createDirIfNotExist(dir string) {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			panic(err)
-		}
-	}
+func (f Files) GetVersionsDir() string {
+	return fmt.Sprintf("%s/%s", f.GetAppDir(), f.goVersionsDir)
 }
 
-func getVersionsDir() string {
-	return fmt.Sprintf("%s/%s", getAppDir(), goVersionsDir)
+func (f Files) GetTarFile() string {
+	return fmt.Sprintf("%s/%s", f.GetVersionsDir(), f.tarFileName)
 }
 
-func getTarFile() string {
-	return fmt.Sprintf("%s/%s", getVersionsDir(), tarFileName)
+func (f Files) GetBinDir() string {
+	return fmt.Sprintf("%s/%s", f.GetHomeDirectory(), f.binDir)
 }
 
-func getBinDir() string {
-	return fmt.Sprintf("%s/%s", getBaseDir(), binDir)
+func (f Files) GetCurrentVersionFile() string {
+	return fmt.Sprintf("%s/%s", f.GetVersionsDir(), f.currentVersionFileName)
 }
 
-func getCurrentVersionFile() string {
-	return fmt.Sprintf("/%s/%s", getVersionsDir(), currentVersionFileName)
+func (f Files) GetVersionResponseFile() string {
+	return f.versionResponseFile
 }
 
-func CreateInitFiles() {
-	createDirIfNotExist(getAppDir())
-	createDirIfNotExist(getVersionsDir())
-	createDirIfNotExist(getBinDir())
-}
-
-func StoreVersionsResponse(body []byte) error {
-	return os.WriteFile(fmt.Sprintf("%s/%s", getAppDir(), versionResponseFile), body, 0644)
-}
-
-func GetVersionsResponse() ([]byte, error) {
-	return os.ReadFile(fmt.Sprintf("%s/%s", getAppDir(), versionResponseFile))
-}
-
-func AreVersionsCached() bool {
-	file := fmt.Sprintf("%s/%s", getAppDir(), versionResponseFile)
-
-	if info, err := os.Stat(file); err == nil {
-		currentTime := time.Now()
-		// even if the versions are cached, we return false if the
-		// the date the response was stored is more than a week
-		return currentTime.Sub(info.ModTime()).Hours() > 24*7
-	}
-
-	return true
-}
-
-func CreateTarFile(content io.ReadCloser) error {
-	file, err := os.Create(getTarFile())
-	if err != nil {
+func (f Files) CreateInitFiles() error {
+	if err := createDirIfNotExist(f.GetAppDir()); err != nil {
 		return err
 	}
-	defer file.Close()
-
-	_, err = io.Copy(file, content)
-	if err != nil {
+	if err := createDirIfNotExist(f.GetVersionsDir()); err != nil {
+		return err
+	}
+	if err := createDirIfNotExist(f.GetBinDir()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GetTarChecksum() ([]byte, error) {
-	hasher := sha256.New()
-	path := getTarFile()
-
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(hasher, f); err != nil {
-		return nil, err
-	}
-
-	return hasher.Sum(nil), nil
-}
-
-func UnzipTarFile() error {
-	target := getVersionsDir()
-
-	reader, err := os.Open(getTarFile())
-	if err != nil {
-		return err
-	}
-
-	uncompressedStream, err := gzip.NewReader(reader)
-	if err != nil {
-		return err
-	}
-
-	tarReader := tar.NewReader(uncompressedStream)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		path := filepath.Join(target, header.Name)
-		info := header.FileInfo()
-
-		if info.IsDir() {
-			if err := os.MkdirAll(path, info.Mode()); err != nil {
-				return err
-			}
-
-			continue
-		} else {
-			// This is happening only on 1.21.0. The directories are not
-			// able to be found and instead the files contain the whole path
-			// instead of just their name. This creates any missing directories
-			// that exist on the file path. The permissions also are updated to
-			// match the directory permissions from the previous versions
-			if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-				return err
-			}
-		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return err
-		}
-
-		if _, err := io.Copy(file, tarReader); err != nil {
-			return err
-		}
-
-		if err := file.Close(); err != nil {
-			return err
-		}
-	}
-
-	defer func() {
-		if err := reader.Close(); err != nil {
-			panic(err)
-		}
-
-		if err := uncompressedStream.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	return nil
-}
-
-func RenameGoDirectory(goVersionName string) error {
-	target := fmt.Sprintf("%s/%s", getVersionsDir(), "go")
-
-	if err := os.Rename(target, fmt.Sprintf("%s/%s", getVersionsDir(), goVersionName)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func RemoveTarFile() error {
-	err := os.Remove(getTarFile())
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func CreateExecutableSymlink(goVersionName string) error {
-	target := fmt.Sprintf("%s/%s/bin", getVersionsDir(), goVersionName)
-
-	files, err := os.ReadDir(target)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, f := range files {
-		newFile := fmt.Sprintf("%s/%s", target, f.Name())
-		link := fmt.Sprintf("%s/%s", getBinDir(), f.Name())
-
-		if _, err := os.Lstat(link); err == nil {
-			os.Remove(link)
-		}
-
-		if err := os.Symlink(newFile, link); err != nil {
-			return err
-		}
-		os.Chmod(link, 0700)
-	}
-
-	return nil
-}
-
-func UpdateRecentVersion(goVersionName string) error {
-	path := getCurrentVersionFile()
-
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = io.WriteString(file, goVersionName)
-	return err
-}
-
-func GetRecentVersion() string {
-	path := getCurrentVersionFile()
-
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	return string(content)
-}
-
-func DirectoryExists(goVersion string) bool {
-	target := getVersionsDir()
-
-	if _, err := os.Stat(fmt.Sprintf("%s/%s", target, goVersion)); !os.IsNotExist(err) {
-		return true
-	}
-
-	return false
-}
-
-func DeleteDirectory(dirName string) {
-	target := getVersionsDir()
-	err := os.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
-	if err != nil {
-		panic(err)
+func New() FileUtils {
+	return &Files{
+		appDir:                 ".gvs",
+		versionResponseFile:    "goVersions.json",
+		tarFileName:            "downloaded.tar.gz",
+		goVersionsDir:          ".go.versions",
+		binDir:                 "bin",
+		currentVersionFileName: "CURRENT",
 	}
 }
