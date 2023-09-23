@@ -58,7 +58,7 @@ func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Request failed with status %d", response.StatusCode)
+		return fmt.Errorf("request failed with status %d", response.StatusCode)
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -88,7 +88,7 @@ func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body i
 	}
 
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Request failed with status %d", response.StatusCode)
+		return fmt.Errorf("request failed with status %d", response.StatusCode)
 	}
 
 	if err := cb(response.Body); err != nil {

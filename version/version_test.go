@@ -141,7 +141,7 @@ func TestGetVersionsFromRequestWhenNoCache(t *testing.T) {
 			versions, err := versioner.GetVersions(forceFetchVersions)
 
 			if err != nil {
-				t.Errorf("error should be nil, instead got %s", err.Error())
+				t.Errorf("error should be nil, instead got '%s'", err.Error())
 				t.Fail()
 			}
 
@@ -166,8 +166,8 @@ func TestGetVersionsRequestError(t *testing.T) {
 
 	versions, err := versioner.GetVersions(true)
 
-	if err == nil {
-		t.Errorf("error should be %s, instead got nil", expectedError.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be %s, instead got '%s'", expectedError.Error(), err.Error())
 	}
 
 	if versions != nil {
@@ -187,7 +187,7 @@ func TestGetVersionsFromCache(t *testing.T) {
 	versions, err := versioner.GetVersions(false)
 
 	if err != nil {
-		t.Errorf("error should be nil, instead got %s", err.Error())
+		t.Errorf("error should be nil, instead got '%s'", err.Error())
 	}
 
 	if len(versions) != 4 {
@@ -209,8 +209,8 @@ func TestGetVersionsFromCacheError(t *testing.T) {
 
 	versions, err := versioner.GetVersions(false)
 
-	if err == nil {
-		t.Errorf("error should be %s, instead got nil", expectedError.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 
 	if versions != nil {
@@ -269,7 +269,7 @@ func TestDeleteUnusedVersionsDeleteAllUnusedVersions(t *testing.T) {
 	count, err := versioner.DeleteUnusedVersions(versions)
 
 	if err != nil {
-		t.Errorf("error should be nil, instead got %s", err.Error())
+		t.Errorf("error should be nil, instead got '%s'", err.Error())
 	}
 
 	if count != 2 {
@@ -329,8 +329,8 @@ func TestDeleteUnusedVersionsReturnErrorWhenNoRecentVersion(t *testing.T) {
 
 	count, err := versioner.DeleteUnusedVersions(versions)
 
-	if err == nil {
-		t.Errorf("error should be '%s', instead got nil", expectedError.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 
 	if count != -1 {
@@ -382,9 +382,10 @@ func TestDeleteUnusedVersionsReturnErrorOnDelete(t *testing.T) {
 
 	count, err := versioner.DeleteUnusedVersions(versions)
 
-	if err == nil {
-		t.Errorf("error should be '%s', instead got nil", expectedError.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
+
 	if count != 1 {
 		t.Errorf("error should be 1, instead got %d", count)
 	}
@@ -939,7 +940,7 @@ func TestExtendedVersionGetPromptNameShowStable(t *testing.T) {
 			res := param.version.GetPromptName(param.showStable)
 
 			if res != param.message {
-				t.Errorf("result should be %s, instead got %s", param.message, res)
+				t.Errorf("result should be '%s', instead got '%s'", param.message, res)
 				t.Fail()
 			}
 		})

@@ -62,7 +62,7 @@ func TestCreateTarFile(t *testing.T) {
 func TestCreateTarFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/some_other_dst/some_file.tar.gz"
 	fileContent := "foo"
-	expectedError := "open /some_other_dst/some_file.tar.gz: no such file or directory"
+	expectedError := fmt.Errorf("open /some_other_dst/some_file.tar.gz: no such file or directory")
 
 	helper := files.Helper{
 		FileUtils: testutils.FakeFiler{
@@ -72,15 +72,15 @@ func TestCreateTarFileToPathThatDoesNotExist(t *testing.T) {
 
 	err := helper.CreateTarFile(nopCloser{bytes.NewBufferString(fileContent)})
 
-	if err.Error() != expectedError {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError, err.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
 func TestCreateTarFileCopyFailed(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	fileContent := "foo"
-	expectedError := "some error while copying"
+	expectedError := fmt.Errorf("some error while copying")
 
 	helper := files.Helper{
 		FileUtils: testutils.FakeFiler{
@@ -88,12 +88,12 @@ func TestCreateTarFileCopyFailed(t *testing.T) {
 		},
 	}
 
-	err := helper.CreateTarFile(nopCloserWriter{writerError: fmt.Errorf(expectedError), Reader: bytes.NewBufferString(fileContent)})
+	err := helper.CreateTarFile(nopCloserWriter{writerError: expectedError, Reader: bytes.NewBufferString(fileContent)})
 
 	defer os.Remove(fileLocation)
 
-	if err.Error() != expectedError {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError, err.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -125,7 +125,7 @@ func TestGetTarChecksum(t *testing.T) {
 
 func TestGetTarChecksumFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
-	expectedError := "open /tmp/some_file.tar.gz: no such file or directory"
+	expectedError := fmt.Errorf("open /tmp/some_file.tar.gz: no such file or directory")
 
 	helper := files.Helper{
 		FileUtils: testutils.FakeFiler{
@@ -135,8 +135,8 @@ func TestGetTarChecksumFileToPathThatDoesNotExist(t *testing.T) {
 
 	hash, err := helper.GetTarChecksum()
 
-	if err.Error() != expectedError {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError, err.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 
 	if hash != "" {
@@ -195,7 +195,7 @@ func TestRemoveTarFile(t *testing.T) {
 
 func TestRemoveTarFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
-	expectedError := "remove /tmp/some_file.tar.gz: no such file or directory"
+	expectedError := fmt.Errorf("remove /tmp/some_file.tar.gz: no such file or directory")
 
 	helper := files.Helper{
 		FileUtils: testutils.FakeFiler{
@@ -205,8 +205,8 @@ func TestRemoveTarFileToPathThatDoesNotExist(t *testing.T) {
 
 	err := helper.RemoveTarFile()
 
-	if err.Error() != expectedError {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError, err.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -280,7 +280,7 @@ func TestStoreVersionsResponseShouldNotFailWithEmptyContent(t *testing.T) {
 func TestStoreVersionsResponseFileToPathThatDoesNotExist(t *testing.T) {
 	appDir := "/some_other_dst"
 	versionResponseFile := "goVersions.json"
-	expectedError := "open /some_other_dst/goVersions.json: no such file or directory"
+	expectedError := fmt.Errorf("open /some_other_dst/goVersions.json: no such file or directory")
 
 	helper := files.Helper{
 		FileUtils: testutils.FakeFiler{
@@ -291,8 +291,8 @@ func TestStoreVersionsResponseFileToPathThatDoesNotExist(t *testing.T) {
 
 	err := helper.StoreVersionsResponse([]byte("Some content"))
 
-	if err.Error() != expectedError {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError, err.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -354,7 +354,7 @@ func TestGetCachedResponse(t *testing.T) {
 func TestGetCachedResponseFileToPathThatDoesNotExist(t *testing.T) {
 	appDir := "/some_other_dst"
 	versionResponseFile := "goVersions.json"
-	expectedError := "open /some_other_dst/goVersions.json: no such file or directory"
+	expectedError := fmt.Errorf("open /some_other_dst/goVersions.json: no such file or directory")
 
 	helper := files.Helper{
 		FileUtils: testutils.FakeFiler{
@@ -366,8 +366,8 @@ func TestGetCachedResponseFileToPathThatDoesNotExist(t *testing.T) {
 	var responseVersions []api_client.VersionInfo
 	err := helper.GetCachedResponse(&responseVersions)
 
-	if err.Error() != expectedError {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError, err.Error())
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -389,8 +389,9 @@ func TestGetCachedResponseUnmarshalFailed(t *testing.T) {
 
 	defer os.Remove(fmt.Sprintf("%s/%s", appDir, versionResponseFile))
 
-	if err == nil {
-		t.Errorf("error should be '%s', instead got nil", err)
+	expectedError := fmt.Errorf("invalid character 'f' looking for beginning of object key string")
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -498,7 +499,6 @@ func TestDeleteDirectory(t *testing.T) {
 func TestDeleteDirectoryDeleteFails(t *testing.T) {
 	dirLocation := "/tmp"
 	goVersion := "." // This is forcing os.RemoveAll to fail
-	expectedErrorMessage := "RemoveAll /tmp/.: invalid argument"
 
 	path := fmt.Sprintf("%s/%s", dirLocation, goVersion)
 
@@ -514,7 +514,8 @@ func TestDeleteDirectoryDeleteFails(t *testing.T) {
 
 	defer os.RemoveAll(path)
 
-	if err == nil {
-		t.Errorf("error should be '%s, instead got nil", expectedErrorMessage)
+	expectedError := fmt.Errorf("RemoveAll /tmp/.: invalid argument")
+	if err.Error() != expectedError.Error() {
+		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }

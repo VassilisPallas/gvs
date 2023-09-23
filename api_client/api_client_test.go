@@ -89,7 +89,7 @@ func TestFetchVersionsSuccess(t *testing.T) {
 }
 
 func TestFetchVersionsNonOkStatus(t *testing.T) {
-	expectedError := fmt.Errorf("Request failed with status %d", http.StatusBadRequest)
+	expectedError := fmt.Errorf("request failed with status %d", http.StatusBadRequest)
 
 	goRepo := &api_client.Go{Client: testutils.MockClient{
 		Status: http.StatusBadRequest,
@@ -100,8 +100,7 @@ func TestFetchVersionsNonOkStatus(t *testing.T) {
 	err := goRepo.FetchVersions(context.Background(), &versions)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("FetchVersions error should be %s, instead got %s", expectedError, err)
-		return
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -118,8 +117,7 @@ func TestFetchVersionsRequestFailed(t *testing.T) {
 	err := goRepo.FetchVersions(context.Background(), &versions)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("FetchVersions error should be %s, instead got %s", expectedError, err)
-		return
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
@@ -132,22 +130,25 @@ func TestFetchVersionsUnmarshalFailed(t *testing.T) {
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
 
-	if err == nil {
-		t.Errorf("FetchVersions error should be '%s', instead got nil", err)
+	expectedError := fmt.Errorf("invalid character 'f' looking for beginning of object key string")
+	if err.Error() != expectedError.Error() {
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 	}
 }
 
 func TestFetchVersionsReadBodyFailed(t *testing.T) {
+	expectedError := fmt.Errorf("some error while reading body")
+
 	goRepo := &api_client.Go{Client: testutils.MockClient{
 		Status: http.StatusOK,
-		Body:   nopReaderCloser{readError: fmt.Errorf("some error while reading body"), Reader: bytes.NewBufferString("")},
+		Body:   nopReaderCloser{readError: expectedError, Reader: bytes.NewBufferString("")},
 	}}
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
 
-	if err == nil {
-		t.Errorf("FetchVersions error should be '%s', instead got nil", err)
+	if err.Error() != expectedError.Error() {
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 		return
 	}
 }
@@ -165,13 +166,13 @@ func TestDownloadVersionSuccess(t *testing.T) {
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
 	if err != nil {
-		t.Errorf("FetchVersions error should be nil, instead got %s", err)
+		t.Errorf("FetchVersions error should be nil, instead got '%s'", err.Error())
 		return
 	}
 }
 
 func TestDownloadVersionNonOkStatus(t *testing.T) {
-	expectedError := fmt.Errorf("Request failed with status %d", http.StatusBadRequest)
+	expectedError := fmt.Errorf("request failed with status %d", http.StatusBadRequest)
 	cb := func(r io.ReadCloser) error {
 		return nil
 	}
@@ -184,7 +185,7 @@ func TestDownloadVersionNonOkStatus(t *testing.T) {
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("FetchVersions error should be %s, instead got %s", expectedError, err)
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 		return
 	}
 }
@@ -204,7 +205,7 @@ func TestDownloadVersionRequestFailed(t *testing.T) {
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("FetchVersions error should be %s, instead got %s", expectedError, err)
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 		return
 	}
 }
@@ -223,7 +224,7 @@ func TestDownloadVersionCallbackFailed(t *testing.T) {
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("FetchVersions error should be %s, instead got %s", expectedError, err)
+		t.Errorf("FetchVersions error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
 		return
 	}
 }

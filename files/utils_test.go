@@ -26,7 +26,7 @@ func TestGetAppDir(t *testing.T) {
 	res := fileUtils.GetAppDir()
 
 	if res != expected {
-		t.Errorf("GetAppDir should be %s, got %s", expected, res)
+		t.Errorf("GetAppDir should be '%s', got '%s'", expected, res)
 	}
 }
 
@@ -38,7 +38,7 @@ func TestGetVersionsDir(t *testing.T) {
 	res := fileUtils.GetVersionsDir()
 
 	if res != expected {
-		t.Errorf("GetVersionsDir should be %s, got %s", expected, res)
+		t.Errorf("GetVersionsDir should be '%s', got '%s'", expected, res)
 	}
 }
 
@@ -50,7 +50,7 @@ func TestGetTarDir(t *testing.T) {
 	res := fileUtils.GetTarFile()
 
 	if res != expected {
-		t.Errorf("GetTarFile should be %s, got %s", expected, res)
+		t.Errorf("GetTarFile should be '%s', got '%s'", expected, res)
 	}
 }
 
@@ -62,7 +62,7 @@ func TestGetBinDir(t *testing.T) {
 	res := fileUtils.GetBinDir()
 
 	if res != expected {
-		t.Errorf("GetBinDir should be %s, got %s", expected, res)
+		t.Errorf("GetBinDir should be '%s', got '%s'", expected, res)
 	}
 }
 
@@ -74,7 +74,7 @@ func TestGetCurrentVersionFile(t *testing.T) {
 	res := fileUtils.GetCurrentVersionFile()
 
 	if res != expected {
-		t.Errorf("GetCurrentVersionFile should be %s, got %s", expected, res)
+		t.Errorf("GetCurrentVersionFile should be '%s', got '%s'", expected, res)
 	}
 }
 
@@ -85,6 +85,6 @@ func TestGetVersionResponseFile(t *testing.T) {
 	res := fileUtils.GetVersionResponseFile()
 
 	if res != expected {
-		t.Errorf("GetVersionResponseFile should be %s, got %s", expected, res)
+		t.Errorf("GetVersionResponseFile should be '%s', got '%s'", expected, res)
 	}
 }
