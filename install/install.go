@@ -12,10 +12,6 @@ import (
 type Installer interface {
 	NewVersion(ctx context.Context, fileName string, checksum string, goVersionName string) error
 	ExistingVersion(goVersionName string) error
-
-	compareChecksums(checksum string) error
-	createSymlink(goVersionName string) error
-	newVersionHandler(checksum string, goVersionName string) func(content io.ReadCloser) error
 }
 
 type Install struct {

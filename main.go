@@ -71,7 +71,7 @@ func main() {
 		}
 	case installLatest:
 		selectedIndex := versioner.GetLatestVersion(versions)
-		err := versioner.Install(versions[selectedIndex], runtime.GOOS, runtime.GOARCH, config.GO_BASE_URL)
+		err := versioner.Install(versions[selectedIndex], runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			// TODO: pass error as log to file
 			fmt.Println(err)
@@ -98,7 +98,8 @@ func main() {
 			fmt.Println(errPrompt)
 			os.Exit(1)
 		}
-		err := versioner.Install(promptVersions[selectedIndex], runtime.GOOS, runtime.GOARCH, config.GO_BASE_URL)
+
+		err := versioner.Install(promptVersions[selectedIndex], runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			// TODO: pass error as log to file
 			fmt.Println(err)

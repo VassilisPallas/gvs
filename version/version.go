@@ -15,17 +15,16 @@ type Versioner interface {
 	GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error)
 	DeleteUnusedVersions(evs []*ExtendedVersion) (int, error)
 	GetLatestVersion(evs []*ExtendedVersion) int
-	Install(ev *ExtendedVersion, os string, arch string, downloadURL string) error
+	Install(ev *ExtendedVersion, os string, arch string) error
 	GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool) []*ExtendedVersion
 
-	filterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string
+	FilterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string
 }
 
 type Version struct {
-	fileUtils files.FileUtils
-	installer install.Installer
-	clientAPI api_client.GoClientAPI
-	helper    VersionHelper
+	Installer install.Installer
+	ClientAPI api_client.GoClientAPI
+	Helper    VersionHelper
 
 	Versioner
 }
@@ -37,6 +36,7 @@ type ExtendedVersion struct {
 	api_client.VersionInfo
 }
 
+// TODO: test this
 func (ev *ExtendedVersion) addExtras(helper VersionHelper) {
 	if helper.DirectoryExists(ev.Version) {
 		ev.AlreadyInstalled = true
@@ -74,35 +74,7 @@ func (ev ExtendedVersion) getCleanVersionName() string {
 	return strings.TrimPrefix(ev.Version, "go")
 }
 
-func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error) {
-	var responseVersions []api_client.VersionInfo
-
-	if v.helper.AreVersionsCached() || forceFetchVersions {
-		err := v.clientAPI.FetchVersions(context.TODO(), &responseVersions)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := v.helper.GetCachedResponse(&responseVersions)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	versions := make([]*ExtendedVersion, 0, len(responseVersions))
-	for _, rv := range responseVersions {
-		version := &ExtendedVersion{VersionInfo: rv}
-		version.addExtras(v.helper)
-
-		versions = append(versions, version)
-	}
-
-	// release underlying array to gc
-	responseVersions = nil
-	return versions, nil
-}
-
-func (v Version) filterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string {
+func (v Version) FilterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string {
 	installedVersions := make([]string, 0, len(evs))
 
 	for _, vi := range evs {
@@ -114,21 +86,46 @@ func (v Version) filterAlreadyDownloadedVersions(evs []*ExtendedVersion) []strin
 	return installedVersions
 }
 
+func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error) {
+	var responseVersions []api_client.VersionInfo
+
+	if !v.Helper.AreVersionsCached() || forceFetchVersions {
+		err := v.ClientAPI.FetchVersions(context.TODO(), &responseVersions)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := v.Helper.GetCachedResponse(&responseVersions)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	versions := make([]*ExtendedVersion, 0, len(responseVersions))
+	for _, rv := range responseVersions {
+		version := &ExtendedVersion{VersionInfo: rv}
+		version.addExtras(v.Helper)
+
+		versions = append(versions, version)
+	}
+
+	return versions, nil
+}
+
 func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
-	versions := v.filterAlreadyDownloadedVersions(evs)
-	usedVersion := v.helper.GetRecentVersion()
+	versions := v.FilterAlreadyDownloadedVersions(evs)
+	usedVersion := v.Helper.GetRecentVersion()
 
 	if usedVersion == "" {
-		return -1, fmt.Errorf("There is no any installed version")
+		return -1, fmt.Errorf("there is no any installed version")
 	}
 
 	count := 0
 	for _, version := range versions {
 		if version != usedVersion {
-
 			fmt.Printf("Deleting %s \n", version)
-			if err := v.helper.DeleteDirectory(version); err != nil {
-				return count, fmt.Errorf("An error occurred while deleting %s: %s", version, err.Error())
+			if err := v.Helper.DeleteDirectory(version); err != nil {
+				return count, fmt.Errorf("an error occurred while deleting %s: %s", version, err.Error())
 			}
 
 			count++
@@ -148,9 +145,10 @@ func (v Version) GetLatestVersion(evs []*ExtendedVersion) int {
 	return -1
 }
 
-func (v Version) Install(ev *ExtendedVersion, os string, arch string, downloadURL string) error {
+func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 	if ev.AlreadyInstalled {
-		err := v.installer.ExistingVersion(ev.Version)
+		// TODO: validate this got called
+		err := v.Installer.ExistingVersion(ev.Version)
 		if err != nil {
 			return err
 		}
@@ -166,10 +164,18 @@ func (v Version) Install(ev *ExtendedVersion, os string, arch string, downloadUR
 		}
 
 		if fileName == "" {
-			return fmt.Errorf("installer not found for %s-%s.", os, arch)
+			return fmt.Errorf("installer not found for %s-%s", os, arch)
 		}
 
-		v.installer.NewVersion(context.TODO(), fileName, checksum, ev.Version)
+		if checksum == "" {
+			return fmt.Errorf("checksum not found for %s-%s", os, arch)
+		}
+
+		// TODO: validate this got called
+		err := v.Installer.NewVersion(context.TODO(), fileName, checksum, ev.Version)
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Printf("%s version is installed!\n", ev.getCleanVersionName())
@@ -190,9 +196,8 @@ func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool)
 func New(fileUtils files.FileUtils, clientAPI api_client.GoClientAPI, installer install.Installer) Versioner {
 	helper := Helper{FileUtils: fileUtils}
 	return Version{
-		fileUtils: fileUtils,
-		installer: installer,
-		clientAPI: clientAPI,
-		helper:    helper,
+		Installer: installer,
+		ClientAPI: clientAPI,
+		Helper:    helper,
 	}
 }

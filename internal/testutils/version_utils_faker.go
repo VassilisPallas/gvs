@@ -1,36 +1,26 @@
 package testutils
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/VassilisPallas/gvs/api_client"
 )
 
-type MockClient struct {
-	Status       int
-	Body         io.ReadCloser
-	RequestError error
+type FakeVersionHelper struct {
+	CachedVersion        bool
+	CacheResponseError   error
+	RecentVersion        string
+	DeleteDirectoryError error
 }
 
-func (tc MockClient) Do(req *http.Request) (*http.Response, error) {
-	return &http.Response{
-		StatusCode: tc.Status,
-		Body:       tc.Body,
-	}, tc.RequestError
+func (FakeVersionHelper) StoreVersionsResponse(body []byte) error {
+	return nil
 }
 
-type FakeGoClientAPI struct {
-	DownloadError      error
-	FetchVersionsError error
-}
-
-func (ga FakeGoClientAPI) FetchVersions(ctx context.Context, v *[]api_client.VersionInfo) error {
-	if ga.FetchVersionsError != nil {
-		return ga.FetchVersionsError
+func (vh FakeVersionHelper) GetCachedResponse(v *[]api_client.VersionInfo) error {
+	if vh.CacheResponseError != nil {
+		return vh.CacheResponseError
 	}
 
 	responseVersions := []map[string]interface{}{
@@ -68,6 +58,11 @@ func (ga FakeGoClientAPI) FetchVersions(ctx context.Context, v *[]api_client.Ver
 			"stable":  true,
 			"files":   []any{},
 		},
+		{
+			"version": "go1.18.0",
+			"stable":  true,
+			"files":   []any{},
+		},
 	}
 
 	responseBody, err := json.Marshal(responseVersions)
@@ -81,10 +76,22 @@ func (ga FakeGoClientAPI) FetchVersions(ctx context.Context, v *[]api_client.Ver
 	return err
 }
 
-func (ga FakeGoClientAPI) DownloadVersion(ctx context.Context, filename string, cb func(body io.ReadCloser) error) error {
-	if err := cb(nil); err != nil {
-		return err
+func (vh FakeVersionHelper) AreVersionsCached() bool {
+	return vh.CachedVersion
+}
+
+func (vh FakeVersionHelper) GetRecentVersion() string {
+	return vh.RecentVersion
+}
+
+func (FakeVersionHelper) DirectoryExists(goVersion string) bool {
+	return false
+}
+
+func (vh FakeVersionHelper) DeleteDirectory(dirName string) error {
+	if dirName == "bad_version" {
+		return vh.DeleteDirectoryError
 	}
 
-	return ga.DownloadError
+	return nil
 }
