@@ -20,7 +20,7 @@ var (
 	deleteUnused    = false
 	showAllVersions = false
 
-	filesUtils = files.New()
+	filesUtils = files.NewUtils()
 )
 
 func parseFlags() {
@@ -44,9 +44,10 @@ func init() {
 func main() {
 	config := cf.GetConfig()
 	clientAPI := api_client.New(config)
-	installer := install.New(filesUtils, clientAPI)
+	fileHelpers := files.New(filesUtils)
+	installer := install.New(fileHelpers, clientAPI)
 
-	versioner := version.New(filesUtils, clientAPI, installer)
+	versioner := version.New(fileHelpers, clientAPI, installer)
 
 	versions, err := versioner.GetVersions(refreshVersions)
 	if err != nil {

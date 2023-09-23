@@ -15,18 +15,17 @@ type Installer interface {
 }
 
 type Install struct {
-	FileUtils files.FileUtils
-	ClientAPI api_client.GoClientAPI
-	Helper    InstallHelper
+	FileHelpers files.FileHelpers
+	ClientAPI   api_client.GoClientAPI
 
 	Installer
 }
 
 func (i Install) compareChecksums(checksum string) error {
-	hash, err := i.Helper.GetTarChecksum()
+	hash, err := i.FileHelpers.GetTarChecksum()
 	if err != nil {
 		// TODO: test this
-		i.Helper.RemoveTarFile()
+		i.FileHelpers.RemoveTarFile()
 		return err
 	}
 
@@ -38,11 +37,11 @@ func (i Install) compareChecksums(checksum string) error {
 }
 
 func (i Install) createSymlink(goVersionName string) error {
-	if err := i.Helper.CreateExecutableSymlink(goVersionName); err != nil {
+	if err := i.FileHelpers.CreateExecutableSymlink(goVersionName); err != nil {
 		return err
 	}
 
-	if err := i.Helper.UpdateRecentVersion(goVersionName); err != nil {
+	if err := i.FileHelpers.UpdateRecentVersion(goVersionName); err != nil {
 		return err
 	}
 
@@ -51,7 +50,7 @@ func (i Install) createSymlink(goVersionName string) error {
 
 func (i Install) newVersionHandler(checksum string, goVersionName string) func(content io.ReadCloser) error {
 	return func(content io.ReadCloser) error {
-		if err := i.Helper.CreateTarFile(content); err != nil {
+		if err := i.FileHelpers.CreateTarFile(content); err != nil {
 			return err
 		}
 
@@ -61,15 +60,15 @@ func (i Install) newVersionHandler(checksum string, goVersionName string) func(c
 		}
 
 		fmt.Println("Unzipping...")
-		if err := i.Helper.UnzipTarFile(); err != nil {
+		if err := i.FileHelpers.UnzipTarFile(); err != nil {
 			return err
 		}
 
-		if err := i.Helper.RenameGoDirectory(goVersionName); err != nil {
+		if err := i.FileHelpers.RenameGoDirectory(goVersionName); err != nil {
 			return err
 		}
 
-		if err := i.Helper.RemoveTarFile(); err != nil {
+		if err := i.FileHelpers.RemoveTarFile(); err != nil {
 			return err
 		}
 
@@ -88,7 +87,6 @@ func (i Install) ExistingVersion(goVersionName string) error {
 	return i.createSymlink(goVersionName)
 }
 
-func New(fileUtils files.FileUtils, clientAPI api_client.GoClientAPI) Installer {
-	helper := Helper{FileUtils: fileUtils}
-	return Install{FileUtils: fileUtils, ClientAPI: clientAPI, Helper: helper}
+func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI) Installer {
+	return Install{FileHelpers: fileHelpers, ClientAPI: clientAPI}
 }

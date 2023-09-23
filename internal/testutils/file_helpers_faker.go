@@ -3,24 +3,61 @@ package testutils
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/VassilisPallas/gvs/api_client"
 )
 
-type FakeVersionHelper struct {
+type FakeFilesHelper struct {
+	CreateExecutableSymlinkError error
+	UpdateRecentVersionError     error
+	CreateTarFileError           error
+	UnzippingError               error
+	RenameDirectoryError         error
+	RemoveTarFileError           error
+	Checksum                     string
+
 	CachedVersion        bool
 	CacheResponseError   error
 	RecentVersion        string
 	DeleteDirectoryError error
 }
 
-func (FakeVersionHelper) StoreVersionsResponse(body []byte) error {
+func (fh FakeFilesHelper) CreateTarFile(content io.ReadCloser) error {
+	return fh.CreateTarFileError
+}
+
+func (fh FakeFilesHelper) GetTarChecksum() (string, error) {
+	return fh.Checksum, nil
+}
+
+func (fh FakeFilesHelper) UnzipTarFile() error {
+	return fh.UnzippingError
+}
+
+func (fh FakeFilesHelper) RenameGoDirectory(goVersionName string) error {
+	return fh.RenameDirectoryError
+}
+
+func (fh FakeFilesHelper) RemoveTarFile() error {
+	return fh.RemoveTarFileError
+}
+
+func (fh FakeFilesHelper) CreateExecutableSymlink(goVersionName string) error {
+	return fh.CreateExecutableSymlinkError
+}
+
+func (fh FakeFilesHelper) UpdateRecentVersion(goVersionName string) error {
+	return fh.UpdateRecentVersionError
+}
+
+func (FakeFilesHelper) StoreVersionsResponse(body []byte) error {
 	return nil
 }
 
-func (vh FakeVersionHelper) GetCachedResponse(v *[]api_client.VersionInfo) error {
-	if vh.CacheResponseError != nil {
-		return vh.CacheResponseError
+func (fh FakeFilesHelper) GetCachedResponse(v *[]api_client.VersionInfo) error {
+	if fh.CacheResponseError != nil {
+		return fh.CacheResponseError
 	}
 
 	responseVersions := []map[string]interface{}{
@@ -76,21 +113,21 @@ func (vh FakeVersionHelper) GetCachedResponse(v *[]api_client.VersionInfo) error
 	return err
 }
 
-func (vh FakeVersionHelper) AreVersionsCached() bool {
-	return vh.CachedVersion
+func (fh FakeFilesHelper) AreVersionsCached() bool {
+	return fh.CachedVersion
 }
 
-func (vh FakeVersionHelper) GetRecentVersion() string {
-	return vh.RecentVersion
+func (fh FakeFilesHelper) GetRecentVersion() string {
+	return fh.RecentVersion
 }
 
-func (FakeVersionHelper) DirectoryExists(goVersion string) bool {
+func (FakeFilesHelper) DirectoryExists(goVersion string) bool {
 	return false
 }
 
-func (vh FakeVersionHelper) DeleteDirectory(dirName string) error {
+func (fh FakeFilesHelper) DeleteDirectory(dirName string) error {
 	if dirName == "bad_version" {
-		return vh.DeleteDirectoryError
+		return fh.DeleteDirectoryError
 	}
 
 	return nil

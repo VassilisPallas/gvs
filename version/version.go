@@ -22,9 +22,9 @@ type Versioner interface {
 }
 
 type Version struct {
-	Installer install.Installer
-	ClientAPI api_client.GoClientAPI
-	Helper    VersionHelper
+	Installer   install.Installer
+	ClientAPI   api_client.GoClientAPI
+	FileHelpers files.FileHelpers
 
 	Versioner
 }
@@ -37,7 +37,7 @@ type ExtendedVersion struct {
 }
 
 // TODO: test this
-func (ev *ExtendedVersion) addExtras(helper VersionHelper) {
+func (ev *ExtendedVersion) addExtras(helper files.FileHelpers) {
 	if helper.DirectoryExists(ev.Version) {
 		ev.AlreadyInstalled = true
 	}
@@ -89,13 +89,13 @@ func (v Version) FilterAlreadyDownloadedVersions(evs []*ExtendedVersion) []strin
 func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error) {
 	var responseVersions []api_client.VersionInfo
 
-	if !v.Helper.AreVersionsCached() || forceFetchVersions {
+	if !v.FileHelpers.AreVersionsCached() || forceFetchVersions {
 		err := v.ClientAPI.FetchVersions(context.TODO(), &responseVersions)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		err := v.Helper.GetCachedResponse(&responseVersions)
+		err := v.FileHelpers.GetCachedResponse(&responseVersions)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error
 	versions := make([]*ExtendedVersion, 0, len(responseVersions))
 	for _, rv := range responseVersions {
 		version := &ExtendedVersion{VersionInfo: rv}
-		version.addExtras(v.Helper)
+		version.addExtras(v.FileHelpers)
 
 		versions = append(versions, version)
 	}
@@ -114,7 +114,7 @@ func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error
 
 func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 	versions := v.FilterAlreadyDownloadedVersions(evs)
-	usedVersion := v.Helper.GetRecentVersion()
+	usedVersion := v.FileHelpers.GetRecentVersion()
 
 	if usedVersion == "" {
 		return -1, fmt.Errorf("there is no any installed version")
@@ -124,7 +124,7 @@ func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 	for _, version := range versions {
 		if version != usedVersion {
 			fmt.Printf("Deleting %s \n", version)
-			if err := v.Helper.DeleteDirectory(version); err != nil {
+			if err := v.FileHelpers.DeleteDirectory(version); err != nil {
 				return count, fmt.Errorf("an error occurred while deleting %s: %s", version, err.Error())
 			}
 
@@ -193,11 +193,10 @@ func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool)
 	return filteredVersions
 }
 
-func New(fileUtils files.FileUtils, clientAPI api_client.GoClientAPI, installer install.Installer) Versioner {
-	helper := Helper{FileUtils: fileUtils}
+func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, installer install.Installer) Versioner {
 	return Version{
-		Installer: installer,
-		ClientAPI: clientAPI,
-		Helper:    helper,
+		Installer:   installer,
+		ClientAPI:   clientAPI,
+		FileHelpers: fileHelpers,
 	}
 }

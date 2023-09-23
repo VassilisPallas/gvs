@@ -12,9 +12,9 @@ import (
 
 func TestFilterAlreadyDownloadedVersionsReturnInstalledVersions(t *testing.T) {
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	evs := []*version.ExtendedVersion{
@@ -71,9 +71,9 @@ func TestFilterAlreadyDownloadedVersionsReturnInstalledVersions(t *testing.T) {
 
 func TestFilterAlreadyDownloadedVersionsReturnEmptyResults(t *testing.T) {
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	evs := []*version.ExtendedVersion{
@@ -133,9 +133,9 @@ func TestGetVersionsFromRequestWhenNoCache(t *testing.T) {
 	for _, forceFetchVersions := range parameters {
 		t.Run(fmt.Sprintf("with forceFetchVersions %t", forceFetchVersions), func(t *testing.T) {
 			versioner := version.Version{
-				Installer: testutils.FakeInstaller{},
-				ClientAPI: testutils.FakeGoClientAPI{},
-				Helper:    testutils.FakeVersionHelper{},
+				Installer:   testutils.FakeInstaller{},
+				ClientAPI:   testutils.FakeGoClientAPI{},
+				FileHelpers: testutils.FakeFilesHelper{},
 			}
 
 			versions, err := versioner.GetVersions(forceFetchVersions)
@@ -161,7 +161,7 @@ func TestGetVersionsRequestError(t *testing.T) {
 		ClientAPI: testutils.FakeGoClientAPI{
 			FetchVersionsError: expectedError,
 		},
-		Helper: testutils.FakeVersionHelper{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	versions, err := versioner.GetVersions(true)
@@ -179,7 +179,7 @@ func TestGetVersionsFromCache(t *testing.T) {
 	versioner := version.Version{
 		Installer: testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper: testutils.FakeVersionHelper{
+		FileHelpers: testutils.FakeFilesHelper{
 			CachedVersion: true,
 		},
 	}
@@ -201,7 +201,7 @@ func TestGetVersionsFromCacheError(t *testing.T) {
 	versioner := version.Version{
 		Installer: testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper: testutils.FakeVersionHelper{
+		FileHelpers: testutils.FakeFilesHelper{
 			CacheResponseError: expectedError,
 			CachedVersion:      true,
 		},
@@ -261,7 +261,7 @@ func TestDeleteUnusedVersionsDeleteAllUnusedVersions(t *testing.T) {
 	versioner := version.Version{
 		Installer: testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper: testutils.FakeVersionHelper{
+		FileHelpers: testutils.FakeFilesHelper{
 			RecentVersion: "go1.21.0",
 		},
 	}
@@ -322,7 +322,7 @@ func TestDeleteUnusedVersionsReturnErrorWhenNoRecentVersion(t *testing.T) {
 	versioner := version.Version{
 		Installer: testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper: testutils.FakeVersionHelper{
+		FileHelpers: testutils.FakeFilesHelper{
 			RecentVersion: "",
 		},
 	}
@@ -374,7 +374,7 @@ func TestDeleteUnusedVersionsReturnErrorOnDelete(t *testing.T) {
 	versioner := version.Version{
 		Installer: testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper: testutils.FakeVersionHelper{
+		FileHelpers: testutils.FakeFilesHelper{
 			RecentVersion:        "go1.21.0",
 			DeleteDirectoryError: expectedError,
 		},
@@ -440,9 +440,9 @@ func TestGetLatestVersionReturnLatestStableVersion(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	index := versioner.GetLatestVersion(versions)
@@ -466,9 +466,9 @@ func TestGetLatestVersionReturnLatestStableVersionNoStableVersionFound(t *testin
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	index := versioner.GetLatestVersion(versions)
@@ -493,9 +493,9 @@ func TestInstallShouldInstallExistingVersion(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -524,8 +524,8 @@ func TestInstallInstallExistingVersionError(t *testing.T) {
 		Installer: testutils.FakeInstaller{
 			ExistingVersionError: expectedError,
 		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -561,9 +561,9 @@ func TestInstallNewVersionFileNameNotFound(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -599,9 +599,9 @@ func TestInstallNewVersionChecksumNotFound(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -637,9 +637,9 @@ func TestInstallNewVersionArchiveNotFound(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -674,9 +674,9 @@ func TestInstallNewVersion(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -715,8 +715,8 @@ func TestInstallNewVersionError(t *testing.T) {
 		Installer: testutils.FakeInstaller{
 			NewVersionError: expectedError,
 		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	err := versioner.Install(&ev, os, arch)
@@ -767,9 +767,9 @@ func TestGetPromptVersionsStableOnly(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	expectedVersions := []*version.ExtendedVersion{
@@ -849,9 +849,9 @@ func TestGetPromptVersionsAllVersions(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Helper:    testutils.FakeVersionHelper{},
+		Installer:   testutils.FakeInstaller{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		FileHelpers: testutils.FakeFilesHelper{},
 	}
 
 	filteredVersions := versioner.GetPromptVersions(versions, true)
