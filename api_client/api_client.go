@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/VassilisPallas/gvs/config"
+	"github.com/VassilisPallas/gvs/errors"
 )
 
 type HTTPClient interface {
@@ -58,7 +59,7 @@ func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("request failed with status %d", response.StatusCode)
+		return &errors.RequestError{StatusCode: response.StatusCode}
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -88,7 +89,7 @@ func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body i
 	}
 
 	if response.StatusCode != 200 {
-		return fmt.Errorf("request failed with status %d", response.StatusCode)
+		return &errors.RequestError{StatusCode: response.StatusCode}
 	}
 
 	if err := cb(response.Body); err != nil {

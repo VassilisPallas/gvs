@@ -2,10 +2,10 @@ package install
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/VassilisPallas/gvs/api_client"
+	"github.com/VassilisPallas/gvs/errors"
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/logger"
 )
@@ -32,7 +32,7 @@ func (i Install) compareChecksums(checksum string) error {
 	}
 
 	if hash != checksum {
-		return fmt.Errorf("checksums do not match.\nExpected: %s\nGot: %s", checksum, hash)
+		return &errors.ChecksumMisMatchError{Checksum: checksum, Hash: hash}
 	}
 
 	return nil

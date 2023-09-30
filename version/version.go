@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VassilisPallas/gvs/api_client"
+	"github.com/VassilisPallas/gvs/errors"
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/install"
 	"github.com/VassilisPallas/gvs/logger"
-
-	"github.com/VassilisPallas/gvs/api_client"
 )
 
 type Versioner interface {
@@ -119,7 +119,7 @@ func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 	usedVersion := v.FileHelpers.GetRecentVersion()
 
 	if usedVersion == "" {
-		return -1, fmt.Errorf("there is no any installed version")
+		return -1, &errors.NoInstalledVersionsError{}
 	}
 
 	count := 0
@@ -127,7 +127,7 @@ func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 		if version != usedVersion {
 			v.Log.PrintMessage("Deleting %s.\n", version)
 			if err := v.FileHelpers.DeleteDirectory(version); err != nil {
-				return count, fmt.Errorf("an error occurred while deleting %s: %s", version, err.Error())
+				return count, &errors.DeleteVersionError{Err: err, Version: version}
 			}
 
 			v.Log.PrintMessage("%s is deleted.\n", version)
@@ -168,11 +168,11 @@ func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 		}
 
 		if fileName == "" {
-			return fmt.Errorf("installer not found for %s-%s", os, arch)
+			return &errors.InstalledNotFoundError{OS: os, Arch: arch}
 		}
 
 		if checksum == "" {
-			return fmt.Errorf("checksum not found for %s-%s", os, arch)
+			return &errors.ChecksumNotFoundError{OS: os, Arch: arch}
 		}
 
 		// TODO: validate this got called
