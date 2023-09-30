@@ -26,6 +26,7 @@ type FileUtils interface {
 	GetCurrentVersionFile() string
 	GetVersionResponseFile() string
 	CreateInitFiles() error
+	CreateLogFile() (*os.File, error)
 }
 
 type Files struct {
@@ -35,6 +36,7 @@ type Files struct {
 	goVersionsDir          string
 	binDir                 string
 	currentVersionFileName string
+	logFile                string
 
 	FileUtils
 }
@@ -72,6 +74,7 @@ func (f Files) GetVersionResponseFile() string {
 	return f.versionResponseFile
 }
 
+// TODO: add tests
 func (f Files) CreateInitFiles() error {
 	if err := createDirIfNotExist(f.GetAppDir()); err != nil {
 		return err
@@ -82,11 +85,20 @@ func (f Files) CreateInitFiles() error {
 	if err := createDirIfNotExist(f.GetBinDir()); err != nil {
 		return err
 	}
+	if err := createDirIfNotExist(f.GetBinDir()); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func NewUtils() FileUtils {
+// TODO: add tests
+func (f Files) CreateLogFile() (*os.File, error) {
+	filename := fmt.Sprintf("%s/%s", f.GetAppDir(), f.logFile)
+	return os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+}
+
+func NewUtils() *Files {
 	return &Files{
 		appDir:                 ".gvs",
 		versionResponseFile:    "goVersions.json",
@@ -94,5 +106,6 @@ func NewUtils() FileUtils {
 		goVersionsDir:          ".go.versions",
 		binDir:                 "bin",
 		currentVersionFileName: "CURRENT",
+		logFile:                "gvs.log",
 	}
 }

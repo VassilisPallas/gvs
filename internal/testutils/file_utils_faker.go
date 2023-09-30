@@ -1,5 +1,7 @@
 package testutils
 
+import "os"
+
 type FakeFiler struct {
 	TarFile                 string
 	VersionDir              string
@@ -38,4 +40,8 @@ func (ff FakeFiler) GetVersionResponseFile() string {
 
 func (FakeFiler) GetHomeDirectory() string {
 	return ""
+}
+
+func (FakeFiler) CreateLogFile() (*os.File, error) {
+	return nil, nil
 }

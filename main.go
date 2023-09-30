@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"runtime"
 
@@ -10,6 +9,7 @@ import (
 	cf "github.com/VassilisPallas/gvs/config"
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/install"
+	"github.com/VassilisPallas/gvs/logger"
 	"github.com/VassilisPallas/gvs/version"
 	"github.com/manifoldco/promptui"
 )
@@ -20,7 +20,8 @@ var (
 	deleteUnused    = false
 	showAllVersions = false
 
-	filesUtils = files.NewUtils()
+	filesUtils             = files.NewUtils()
+	log        *logger.Log = nil
 )
 
 func parseFlags() {
@@ -32,53 +33,67 @@ func parseFlags() {
 }
 
 func init() {
+	logFile, err := filesUtils.CreateLogFile()
+	log = logger.New(os.Stdout, logFile)
+	if err != nil {
+		log.PrintError(err.Error())
+		return
+	}
+
 	if err := filesUtils.CreateInitFiles(); err != nil {
-		// TODO: pass error as log to file
-		fmt.Println(err)
-		os.Exit(1)
+		log.PrintError(err.Error())
+		return
 	}
 
 	parseFlags()
 }
 
 func main() {
+	defer log.Close()
+
 	config := cf.GetConfig()
 	clientAPI := api_client.New(config)
 	fileHelpers := files.New(filesUtils)
-	installer := install.New(fileHelpers, clientAPI)
+	installer := install.New(fileHelpers, clientAPI, log)
 
-	versioner := version.New(fileHelpers, clientAPI, installer)
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	versions, err := versioner.GetVersions(refreshVersions)
 	if err != nil {
-		// TODO: pass error as log to file
-		fmt.Println(err)
-		os.Exit(1)
+		log.PrintError(err.Error())
+		return
 	}
 
 	switch {
 	case deleteUnused:
+		log.Info("deleteUnused option selected")
+
 		deleted_count, err := versioner.DeleteUnusedVersions(versions)
 		if err != nil {
-			// TODO: pass error as log to file
-			fmt.Println(err)
-			os.Exit(1)
+			log.PrintError(err.Error())
+			return
 		}
 
 		if deleted_count > 0 {
-			fmt.Println("All the unused version are deleted!")
+			log.PrintMessage("All the unused version are deleted!")
 		} else {
-			fmt.Println("Nothing to delete")
+			log.PrintMessage("Nothing to delete")
 		}
 	case installLatest:
+		log.Info("installLatest option selected")
+
 		selectedIndex := versioner.GetLatestVersion(versions)
-		err := versioner.Install(versions[selectedIndex], runtime.GOOS, runtime.GOARCH)
+		selectedVersion := versions[selectedIndex]
+
+		log.Info("selected %s version", selectedVersion.Version)
+		err := versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
-			// TODO: pass error as log to file
-			fmt.Println(err)
-			os.Exit(1)
+			log.PrintError(err.Error())
+			return
 		}
 	default:
+		log.Info("install version option selected\n")
+
 		promptVersions := versioner.GetPromptVersions(versions, showAllVersions)
 
 		var versionNames []string
@@ -95,16 +110,17 @@ func main() {
 
 		selectedIndex, _, errPrompt := prompt.Run()
 		if errPrompt != nil {
-			// TODO: pass error as log to file
-			fmt.Println(errPrompt)
-			os.Exit(1)
+			log.PrintError(errPrompt.Error())
+			return
 		}
 
-		err := versioner.Install(promptVersions[selectedIndex], runtime.GOOS, runtime.GOARCH)
+		selectedVersion := promptVersions[selectedIndex]
+
+		log.Info("selected %s version\n", selectedVersion.Version)
+		err := versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
-			// TODO: pass error as log to file
-			fmt.Println(err)
-			os.Exit(1)
+			log.PrintError(err.Error())
+			return
 		}
 	}
 }

@@ -263,7 +263,7 @@ func (h Helper) DeleteDirectory(dirName string) error {
 	return nil
 }
 
-func New(fileUtils FileUtils) FileHelpers {
+func New(fileUtils FileUtils) *Helper {
 	return &Helper{
 		FileUtils: fileUtils,
 	}

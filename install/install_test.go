@@ -7,6 +7,8 @@ import (
 
 	"github.com/VassilisPallas/gvs/install"
 	"github.com/VassilisPallas/gvs/internal/testutils"
+	"github.com/VassilisPallas/gvs/logger"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestInstallExistingVersionSucess(t *testing.T) {
@@ -15,12 +17,39 @@ func TestInstallExistingVersionSucess(t *testing.T) {
 	installer := install.Install{
 		FileHelpers: testutils.FakeFilesHelper{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
+		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.ExistingVersion(version)
 
 	if err != nil {
 		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+	}
+}
+
+func TestInstallExistingVersionSucessLogs(t *testing.T) {
+	printer := &testutils.FakeStdout{}
+
+	version := "go1.21.0"
+
+	installer := install.Install{
+		FileHelpers: testutils.FakeFilesHelper{},
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		Log:         logger.New(printer, nil),
+	}
+
+	err := installer.ExistingVersion(version)
+
+	if err != nil {
+		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+	}
+
+	printedMessages := printer.GetPrintMessages()
+	expectedPrintedMessages := []string{
+		"Installing version...\n",
+	}
+	if !cmp.Equal(printedMessages, expectedPrintedMessages) {
+		t.Errorf("Wrong logs received, got=%s", cmp.Diff(expectedPrintedMessages, printedMessages))
 	}
 }
 
@@ -33,6 +62,7 @@ func TestInstallExistingVersionFailedSymlinkCreation(t *testing.T) {
 			CreateExecutableSymlinkError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.ExistingVersion(version)
@@ -51,6 +81,7 @@ func TestInstallExistingVersionFailedUpdateVersionFile(t *testing.T) {
 			UpdateRecentVersionError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.ExistingVersion(version)
@@ -69,12 +100,46 @@ func TestInstallNewVersionSuccess(t *testing.T) {
 			Checksum: checksum,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err != nil {
 		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+	}
+
+}
+
+func TestInstallNewVersionSuccessLogs(t *testing.T) {
+	printer := &testutils.FakeStdout{}
+
+	version := "go1.21.0"
+	checksum := "some_checksum"
+
+	installer := install.Install{
+		FileHelpers: testutils.FakeFilesHelper{
+			Checksum: checksum,
+		},
+		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(printer, nil),
+	}
+
+	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
+
+	if err != nil {
+		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+	}
+
+	printedMessages := printer.GetPrintMessages()
+	expectedPrintedMessages := []string{
+		"Downloading...\n",
+		"Compare Checksums...\n",
+		"Unzipping...\n",
+		"Installing version...\n",
+	}
+	if !cmp.Equal(printedMessages, expectedPrintedMessages) {
+		t.Errorf("Wrong logs received, got=%s", cmp.Diff(expectedPrintedMessages, printedMessages))
 	}
 }
 
@@ -89,6 +154,7 @@ func TestInstallNewVersionFailCreateTarFile(t *testing.T) {
 			CreateTarFileError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
@@ -107,6 +173,7 @@ func TestInstallNewVersionFailChecksumMissmatch(t *testing.T) {
 			Checksum: "some_other_checksum",
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
@@ -129,6 +196,7 @@ func TestInstallNewVersionFailUnzipTarFile(t *testing.T) {
 			UnzippingError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
@@ -150,6 +218,7 @@ func TestInstallNewVersionFailRenameDirectory(t *testing.T) {
 			RenameDirectoryError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
@@ -171,6 +240,7 @@ func TestInstallNewVersionFailRemoveTarFile(t *testing.T) {
 			RemoveTarFileError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
+		Log:       logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
@@ -193,6 +263,7 @@ func TestInstallNewVersionFailRequest(t *testing.T) {
 		ClientAPI: testutils.FakeGoClientAPI{
 			DownloadError: expectedError,
 		},
+		Log: logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)

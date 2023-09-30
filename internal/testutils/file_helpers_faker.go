@@ -2,7 +2,6 @@ package testutils
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"github.com/VassilisPallas/gvs/api_client"
@@ -103,7 +102,6 @@ func (fh FakeFilesHelper) GetCachedResponse(v *[]api_client.VersionInfo) error {
 	}
 
 	responseBody, err := json.Marshal(responseVersions)
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}

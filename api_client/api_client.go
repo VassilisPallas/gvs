@@ -99,7 +99,8 @@ func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body i
 	return nil
 }
 
-func New(config config.Configuration) GoClientAPI {
+// TODO: check if should return *Go
+func New(config config.Configuration) Go {
 	return Go{Client: &http.Client{
 		Timeout: time.Duration(config.REQUEST_TIMEOUT) * time.Second,
 	}, Config: config}

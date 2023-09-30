@@ -7,6 +7,7 @@ import (
 
 	"github.com/VassilisPallas/gvs/api_client"
 	"github.com/VassilisPallas/gvs/files"
+	"github.com/VassilisPallas/gvs/logger"
 )
 
 type Installer interface {
@@ -17,6 +18,7 @@ type Installer interface {
 type Install struct {
 	FileHelpers files.FileHelpers
 	ClientAPI   api_client.GoClientAPI
+	Log         *logger.Log
 
 	Installer
 }
@@ -54,12 +56,12 @@ func (i Install) newVersionHandler(checksum string, goVersionName string) func(c
 			return err
 		}
 
-		fmt.Println("Compare Checksums...")
+		i.Log.PrintMessage("Compare Checksums...\n")
 		if err := i.compareChecksums(checksum); err != nil {
 			return err
 		}
 
-		fmt.Println("Unzipping...")
+		i.Log.PrintMessage("Unzipping...\n")
 		if err := i.FileHelpers.UnzipTarFile(); err != nil {
 			return err
 		}
@@ -72,21 +74,22 @@ func (i Install) newVersionHandler(checksum string, goVersionName string) func(c
 			return err
 		}
 
-		fmt.Println("Installing version...")
+		i.Log.PrintMessage("Installing version...\n")
 		return i.createSymlink(goVersionName)
 	}
 }
 
 func (i Install) NewVersion(ctx context.Context, fileName string, checksum string, goVersionName string) error {
-	fmt.Println("Downloading...")
+	i.Log.PrintMessage("Downloading...\n")
 	return i.ClientAPI.DownloadVersion(ctx, fileName, i.newVersionHandler(checksum, goVersionName))
 }
 
 func (i Install) ExistingVersion(goVersionName string) error {
-	fmt.Println("Installing version...")
+	i.Log.PrintMessage("Installing version...\n")
 	return i.createSymlink(goVersionName)
 }
 
-func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI) Installer {
-	return Install{FileHelpers: fileHelpers, ClientAPI: clientAPI}
+// TODO: check if should return *Install
+func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, logger *logger.Log) Install {
+	return Install{FileHelpers: fileHelpers, ClientAPI: clientAPI, Log: logger}
 }

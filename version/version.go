@@ -7,6 +7,7 @@ import (
 
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/install"
+	"github.com/VassilisPallas/gvs/logger"
 
 	"github.com/VassilisPallas/gvs/api_client"
 )
@@ -25,6 +26,7 @@ type Version struct {
 	Installer   install.Installer
 	ClientAPI   api_client.GoClientAPI
 	FileHelpers files.FileHelpers
+	Log         *logger.Log
 
 	Versioner
 }
@@ -123,10 +125,12 @@ func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 	count := 0
 	for _, version := range versions {
 		if version != usedVersion {
-			fmt.Printf("Deleting %s \n", version)
+			v.Log.PrintMessage("Deleting %s.\n", version)
 			if err := v.FileHelpers.DeleteDirectory(version); err != nil {
 				return count, fmt.Errorf("an error occurred while deleting %s: %s", version, err.Error())
 			}
+
+			v.Log.PrintMessage("%s is deleted.\n", version)
 
 			count++
 		}
@@ -178,7 +182,7 @@ func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 		}
 	}
 
-	fmt.Printf("%s version is installed!\n", ev.getCleanVersionName())
+	v.Log.PrintMessage("%s version is installed!\n", ev.getCleanVersionName())
 
 	return nil
 }
@@ -193,10 +197,12 @@ func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool)
 	return filteredVersions
 }
 
-func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, installer install.Installer) Versioner {
+// TODO: check if should return *Version
+func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, installer install.Installer, logger *logger.Log) Version {
 	return Version{
 		Installer:   installer,
 		ClientAPI:   clientAPI,
 		FileHelpers: fileHelpers,
+		Log:         logger,
 	}
 }

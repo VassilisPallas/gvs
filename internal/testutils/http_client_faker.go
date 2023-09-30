@@ -3,7 +3,6 @@ package testutils
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -71,7 +70,6 @@ func (ga FakeGoClientAPI) FetchVersions(ctx context.Context, v *[]api_client.Ver
 	}
 
 	responseBody, err := json.Marshal(responseVersions)
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}
