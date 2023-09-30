@@ -44,7 +44,6 @@ func (l *Log) Info(format string, a ...any) {
 	}
 
 	l.logger.SetPrefix("INFO: ")
-
 	l.logger.Printf(format, a...)
 }
 
@@ -54,8 +53,7 @@ func (l *Log) Error(format string, a ...any) {
 	}
 
 	l.logger.SetPrefix("ERROR: ")
-
-	l.logger.Fatalf(format, a...)
+	l.logger.Printf(format, a...)
 }
 
 func (l *Log) Close() {

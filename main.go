@@ -37,11 +37,13 @@ func init() {
 	log = logger.New(os.Stdout, logFile)
 	if err != nil {
 		log.PrintError(err.Error())
+		os.Exit(1)
 		return
 	}
 
 	if err := filesUtils.CreateInitFiles(); err != nil {
 		log.PrintError(err.Error())
+		os.Exit(1)
 		return
 	}
 
@@ -49,6 +51,7 @@ func init() {
 }
 
 func main() {
+	// close log file after the execution
 	defer log.Close()
 
 	config := cf.GetConfig()
@@ -61,6 +64,7 @@ func main() {
 	versions, err := versioner.GetVersions(refreshVersions)
 	if err != nil {
 		log.PrintError(err.Error())
+		os.Exit(1)
 		return
 	}
 
@@ -71,6 +75,7 @@ func main() {
 		deleted_count, err := versioner.DeleteUnusedVersions(versions)
 		if err != nil {
 			log.PrintError(err.Error())
+			os.Exit(1)
 			return
 		}
 
@@ -89,6 +94,7 @@ func main() {
 		err := versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			log.PrintError(err.Error())
+			os.Exit(1)
 			return
 		}
 	default:
@@ -111,6 +117,7 @@ func main() {
 		selectedIndex, _, errPrompt := prompt.Run()
 		if errPrompt != nil {
 			log.PrintError(errPrompt.Error())
+			os.Exit(1)
 			return
 		}
 
@@ -120,6 +127,7 @@ func main() {
 		err := versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
 		if err != nil {
 			log.PrintError(err.Error())
+			os.Exit(1)
 			return
 		}
 	}
