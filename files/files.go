@@ -62,7 +62,6 @@ func (h Helper) GetTarChecksum() (string, error) {
 	}
 	defer f.Close()
 
-	// TODO: add test
 	if _, err := io.Copy(hasher, f); err != nil {
 		return "", err
 	}
@@ -196,7 +195,6 @@ func (h Helper) UpdateRecentVersion(goVersionName string) error {
 	}
 	defer file.Close()
 
-	// TODO: add test
 	_, err = io.WriteString(file, goVersionName)
 	return err
 }

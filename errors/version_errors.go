@@ -14,7 +14,7 @@ type DeleteVersionError struct {
 }
 
 func (err *DeleteVersionError) Error() string {
-	return fmt.Sprintf("an error occurred while deleting %s: %s", err.Version, err.Err.Error())
+	return fmt.Sprintf("an error occurred while deleting %q: %q", err.Version, err.Err.Error())
 }
 
 type InstalledNotFoundError struct {
@@ -23,7 +23,7 @@ type InstalledNotFoundError struct {
 }
 
 func (err *InstalledNotFoundError) Error() string {
-	return fmt.Sprintf("installer not found for %s-%s", err.OS, err.Arch)
+	return fmt.Sprintf("installer not found for %q %q", err.OS, err.Arch)
 }
 
 type ChecksumNotFoundError struct {
@@ -32,5 +32,5 @@ type ChecksumNotFoundError struct {
 }
 
 func (err *ChecksumNotFoundError) Error() string {
-	return fmt.Sprintf("checksum not found for %s-%s", err.OS, err.Arch)
+	return fmt.Sprintf("checksum not found for %q %q", err.OS, err.Arch)
 }

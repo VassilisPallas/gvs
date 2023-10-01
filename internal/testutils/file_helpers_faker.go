@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"slices"
+
 	"github.com/VassilisPallas/gvs/api_client"
 )
 
@@ -14,20 +16,24 @@ type FakeFilesHelper struct {
 	UnzippingError               error
 	RenameDirectoryError         error
 	RemoveTarFileError           error
-	Checksum                     string
+	CacheResponseError           error
+	DeleteDirectoryError         error
+	GetTarChecksumError          error
 
-	CachedVersion        bool
-	CacheResponseError   error
-	RecentVersion        string
-	DeleteDirectoryError error
+	Checksum                  string
+	RecentVersion             string
+	CachedVersion             bool
+	AlreadyDownloadedVersions []string
+
+	RemoveTarFileCalled bool
 }
 
 func (fh FakeFilesHelper) CreateTarFile(content io.ReadCloser) error {
 	return fh.CreateTarFileError
 }
 
-func (fh FakeFilesHelper) GetTarChecksum() (string, error) {
-	return fh.Checksum, nil
+func (fh *FakeFilesHelper) GetTarChecksum() (string, error) {
+	return fh.Checksum, fh.GetTarChecksumError
 }
 
 func (fh FakeFilesHelper) UnzipTarFile() error {
@@ -38,7 +44,8 @@ func (fh FakeFilesHelper) RenameGoDirectory(goVersionName string) error {
 	return fh.RenameDirectoryError
 }
 
-func (fh FakeFilesHelper) RemoveTarFile() error {
+func (fh *FakeFilesHelper) RemoveTarFile() error {
+	fh.RemoveTarFileCalled = true
 	return fh.RemoveTarFileError
 }
 
@@ -119,8 +126,8 @@ func (fh FakeFilesHelper) GetRecentVersion() string {
 	return fh.RecentVersion
 }
 
-func (FakeFilesHelper) DirectoryExists(goVersion string) bool {
-	return false
+func (fh FakeFilesHelper) DirectoryExists(goVersion string) bool {
+	return slices.Contains(fh.AlreadyDownloadedVersions, goVersion)
 }
 
 func (fh FakeFilesHelper) DeleteDirectory(dirName string) error {

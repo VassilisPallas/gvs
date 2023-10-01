@@ -44,10 +44,7 @@ type VersionInfo struct {
 	Files    []FileInformation `json:"files"`
 }
 
-// TODO: add more tests for config, like url, timeout and ctx cancel etc
-
 func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
-	// TODO: write test for that
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/?mode=json&include=all", g.Config.GO_BASE_URL), nil)
 	if err != nil {
 		return err
@@ -76,7 +73,6 @@ func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
 }
 
 func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body io.ReadCloser) error) error {
-	// TODO: write test for that
 	url := fmt.Sprintf("%s/%s", g.Config.GO_BASE_URL, filename)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

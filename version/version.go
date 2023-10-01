@@ -38,7 +38,6 @@ type ExtendedVersion struct {
 	api_client.VersionInfo
 }
 
-// TODO: test this
 func (ev *ExtendedVersion) addExtras(helper files.FileHelpers) {
 	if helper.DirectoryExists(ev.Version) {
 		ev.AlreadyInstalled = true
@@ -151,7 +150,6 @@ func (v Version) GetLatestVersion(evs []*ExtendedVersion) int {
 
 func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 	if ev.AlreadyInstalled {
-		// TODO: validate this got called
 		err := v.Installer.ExistingVersion(ev.Version)
 		if err != nil {
 			return err
@@ -175,7 +173,6 @@ func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 			return &errors.ChecksumNotFoundError{OS: os, Arch: arch}
 		}
 
-		// TODO: validate this got called
 		err := v.Installer.NewVersion(context.TODO(), fileName, checksum, ev.Version)
 		if err != nil {
 			return err

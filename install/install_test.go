@@ -11,11 +11,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestInstallExistingVersionSucess(t *testing.T) {
+func TestInstallExistingVersionSuccess(t *testing.T) {
 	version := "go1.21.0"
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
@@ -23,17 +23,17 @@ func TestInstallExistingVersionSucess(t *testing.T) {
 	err := installer.ExistingVersion(version)
 
 	if err != nil {
-		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+		t.Errorf("Error should be nil, instead got %q", err.Error())
 	}
 }
 
-func TestInstallExistingVersionSucessLogs(t *testing.T) {
+func TestInstallExistingVersionSuccessLogs(t *testing.T) {
 	printer := &testutils.FakeStdout{}
 
 	version := "go1.21.0"
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
 		Log:         logger.New(printer, nil),
 	}
@@ -41,7 +41,7 @@ func TestInstallExistingVersionSucessLogs(t *testing.T) {
 	err := installer.ExistingVersion(version)
 
 	if err != nil {
-		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+		t.Errorf("Error should be nil, instead got %q", err.Error())
 	}
 
 	printedMessages := printer.GetPrintMessages()
@@ -58,7 +58,7 @@ func TestInstallExistingVersionFailedSymlinkCreation(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while creating the symlink")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			CreateExecutableSymlinkError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
@@ -68,7 +68,7 @@ func TestInstallExistingVersionFailedSymlinkCreation(t *testing.T) {
 	err := installer.ExistingVersion(version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -77,7 +77,7 @@ func TestInstallExistingVersionFailedUpdateVersionFile(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while updating the version file")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			UpdateRecentVersionError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
@@ -87,7 +87,7 @@ func TestInstallExistingVersionFailedUpdateVersionFile(t *testing.T) {
 	err := installer.ExistingVersion(version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -96,7 +96,7 @@ func TestInstallNewVersionSuccess(t *testing.T) {
 	checksum := "some_checksum"
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum: checksum,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
@@ -106,9 +106,8 @@ func TestInstallNewVersionSuccess(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err != nil {
-		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+		t.Errorf("Error should be nil, instead got %q", err.Error())
 	}
-
 }
 
 func TestInstallNewVersionSuccessLogs(t *testing.T) {
@@ -118,7 +117,7 @@ func TestInstallNewVersionSuccessLogs(t *testing.T) {
 	checksum := "some_checksum"
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum: checksum,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
@@ -128,7 +127,7 @@ func TestInstallNewVersionSuccessLogs(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err != nil {
-		t.Errorf("Error should be nil, instead got '%s'", err.Error())
+		t.Errorf("Error should be nil, instead got %q", err.Error())
 	}
 
 	printedMessages := printer.GetPrintMessages()
@@ -150,7 +149,7 @@ func TestInstallNewVersionFailCreateTarFile(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while creating the TAR file")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			CreateTarFileError: expectedError,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
@@ -160,7 +159,34 @@ func TestInstallNewVersionFailCreateTarFile(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
+	}
+}
+
+func TestInstallNewVersionFailGetFileChecksum(t *testing.T) {
+	expectedError := fmt.Errorf("some error")
+	checksum := ""
+
+	fileHelper := &testutils.FakeFilesHelper{
+		Checksum:            checksum,
+		GetTarChecksumError: expectedError,
+	}
+
+	version := "go1.21.0"
+	installer := install.Install{
+		FileHelpers: fileHelper,
+		ClientAPI:   testutils.FakeGoClientAPI{},
+		Log:         logger.New(&testutils.FakeStdout{}, nil),
+	}
+
+	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
+
+	if !fileHelper.RemoveTarFileCalled {
+		t.Errorf("RemoveTarFileCalled has not been called")
+	}
+
+	if err.Error() != expectedError.Error() {
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -169,7 +195,7 @@ func TestInstallNewVersionFailChecksumMissmatch(t *testing.T) {
 	checksum := "some_checksum"
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum: "some_other_checksum",
 		},
 		ClientAPI: testutils.FakeGoClientAPI{},
@@ -178,9 +204,9 @@ func TestInstallNewVersionFailChecksumMissmatch(t *testing.T) {
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
-	expectedError := fmt.Errorf("checksums do not match.\nExpected: %s\nGot: %s", checksum, "some_other_checksum")
+	expectedError := fmt.Errorf("checksums do not match.\nExpected: %q\nGot: %q", checksum, "some_other_checksum")
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -191,7 +217,7 @@ func TestInstallNewVersionFailUnzipTarFile(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while unzipping the TAR file")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum:       checksum,
 			UnzippingError: expectedError,
 		},
@@ -202,7 +228,7 @@ func TestInstallNewVersionFailUnzipTarFile(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -213,7 +239,7 @@ func TestInstallNewVersionFailRenameDirectory(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while renaming the directory")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum:             checksum,
 			RenameDirectoryError: expectedError,
 		},
@@ -224,7 +250,7 @@ func TestInstallNewVersionFailRenameDirectory(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -235,7 +261,7 @@ func TestInstallNewVersionFailRemoveTarFile(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while removing the tart file")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum:           checksum,
 			RemoveTarFileError: expectedError,
 		},
@@ -246,7 +272,7 @@ func TestInstallNewVersionFailRemoveTarFile(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -257,7 +283,7 @@ func TestInstallNewVersionFailRequest(t *testing.T) {
 	expectedError := fmt.Errorf("An error occurred while downloading the file")
 
 	installer := install.Install{
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			Checksum: checksum,
 		},
 		ClientAPI: testutils.FakeGoClientAPI{
@@ -269,6 +295,6 @@ func TestInstallNewVersionFailRequest(t *testing.T) {
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("Error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("Error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }

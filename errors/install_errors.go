@@ -8,5 +8,5 @@ type ChecksumMisMatchError struct {
 }
 
 func (err *ChecksumMisMatchError) Error() string {
-	return fmt.Sprintf("checksums do not match.\nExpected: %s\nGot: %s", err.Checksum, err.Hash)
+	return fmt.Sprintf("checksums do not match.\nExpected: %q\nGot: %q", err.Checksum, err.Hash)
 }

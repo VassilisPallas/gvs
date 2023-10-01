@@ -13,9 +13,9 @@ import (
 
 func TestFilterAlreadyDownloadedVersionsReturnInstalledVersions(t *testing.T) {
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
@@ -73,9 +73,9 @@ func TestFilterAlreadyDownloadedVersionsReturnInstalledVersions(t *testing.T) {
 
 func TestFilterAlreadyDownloadedVersionsReturnEmptyResults(t *testing.T) {
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
@@ -127,7 +127,7 @@ func TestFilterAlreadyDownloadedVersionsReturnEmptyResults(t *testing.T) {
 	}
 }
 
-func TestGetVersionsFromRequestWhenNoCache(t *testing.T) {
+func TestGetVersionsFromRequest(t *testing.T) {
 	parameters := []bool{
 		false,
 		true,
@@ -136,16 +136,16 @@ func TestGetVersionsFromRequestWhenNoCache(t *testing.T) {
 	for _, forceFetchVersions := range parameters {
 		t.Run(fmt.Sprintf("with forceFetchVersions %t", forceFetchVersions), func(t *testing.T) {
 			versioner := version.Version{
-				Installer:   testutils.FakeInstaller{},
+				Installer:   &testutils.FakeInstaller{},
 				ClientAPI:   testutils.FakeGoClientAPI{},
-				FileHelpers: testutils.FakeFilesHelper{},
+				FileHelpers: &testutils.FakeFilesHelper{},
 				Log:         logger.New(&testutils.FakeStdout{}, nil),
 			}
 
 			versions, err := versioner.GetVersions(forceFetchVersions)
 
 			if err != nil {
-				t.Errorf("error should be nil, instead got '%s'", err.Error())
+				t.Errorf("error should be nil, instead got %q", err.Error())
 				t.Fail()
 			}
 
@@ -161,18 +161,18 @@ func TestGetVersionsRequestError(t *testing.T) {
 	expectedError := fmt.Errorf("An error happened")
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
+		Installer: &testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{
 			FetchVersionsError: expectedError,
 		},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	versions, err := versioner.GetVersions(true)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be %s, instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 
 	if versions != nil {
@@ -182,9 +182,9 @@ func TestGetVersionsRequestError(t *testing.T) {
 
 func TestGetVersionsFromCache(t *testing.T) {
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
+		Installer: &testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			CachedVersion: true,
 		},
 		Log: logger.New(&testutils.FakeStdout{}, nil),
@@ -193,7 +193,7 @@ func TestGetVersionsFromCache(t *testing.T) {
 	versions, err := versioner.GetVersions(false)
 
 	if err != nil {
-		t.Errorf("error should be nil, instead got '%s'", err.Error())
+		t.Errorf("error should be nil, instead got %q", err.Error())
 	}
 
 	if len(versions) != 4 {
@@ -201,13 +201,64 @@ func TestGetVersionsFromCache(t *testing.T) {
 	}
 }
 
+func TestGetVersionsAddCorrectExtras(t *testing.T) {
+	versioner := version.Version{
+		Installer: &testutils.FakeInstaller{},
+		ClientAPI: testutils.FakeGoClientAPI{},
+		FileHelpers: &testutils.FakeFilesHelper{
+			CachedVersion:             true,
+			RecentVersion:             "go1.21.0",
+			AlreadyDownloadedVersions: []string{"go1.21.0", "go1.19.0"},
+		},
+		Log: logger.New(&testutils.FakeStdout{}, nil),
+	}
+
+	versions, err := versioner.GetVersions(false)
+
+	if err != nil {
+		t.Errorf("error should be nil, instead got %q", err.Error())
+	}
+
+	if len(versions) != 4 {
+		t.Errorf("versions should be 4, instead got %d", len(versions))
+	}
+
+	for _, v := range versions {
+		if v.Version == "go1.21.0" {
+			if !v.AlreadyInstalled {
+				t.Errorf("%s should be already installed", v.Version)
+			}
+
+			if !v.UsedVersion {
+				t.Errorf("%s should be the used version", v.Version)
+			}
+		} else if v.Version == "go1.19.0" {
+			if !v.AlreadyInstalled {
+				t.Errorf("%s should be already installed", v.Version)
+			}
+
+			if v.UsedVersion {
+				t.Errorf("%s should not be the used version", v.Version)
+			}
+		} else {
+			if v.AlreadyInstalled {
+				t.Errorf("%s should not be already installed", v.Version)
+			}
+
+			if v.UsedVersion {
+				t.Errorf("%s should not be the used version", v.Version)
+			}
+		}
+	}
+}
+
 func TestGetVersionsFromCacheError(t *testing.T) {
 	expectedError := fmt.Errorf("An error happened")
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
+		Installer: &testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			CacheResponseError: expectedError,
 			CachedVersion:      true,
 		},
@@ -217,7 +268,7 @@ func TestGetVersionsFromCacheError(t *testing.T) {
 	versions, err := versioner.GetVersions(false)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 
 	if versions != nil {
@@ -268,9 +319,9 @@ func TestDeleteUnusedVersionsDeleteAllUnusedVersions(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
+		Installer: &testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			RecentVersion: "go1.21.0",
 		},
 		Log: logger.New(printer, nil),
@@ -279,7 +330,7 @@ func TestDeleteUnusedVersionsDeleteAllUnusedVersions(t *testing.T) {
 	count, err := versioner.DeleteUnusedVersions(versions)
 
 	if err != nil {
-		t.Errorf("error should be nil, instead got '%s'", err.Error())
+		t.Errorf("error should be nil, instead got %q", err.Error())
 	}
 
 	if count != 2 {
@@ -341,9 +392,9 @@ func TestDeleteUnusedVersionsReturnErrorWhenNoRecentVersion(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
+		Installer: &testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			RecentVersion: "",
 		},
 		Log: logger.New(&testutils.FakeStdout{}, nil),
@@ -352,7 +403,7 @@ func TestDeleteUnusedVersionsReturnErrorWhenNoRecentVersion(t *testing.T) {
 	count, err := versioner.DeleteUnusedVersions(versions)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 
 	if count != -1 {
@@ -396,9 +447,9 @@ func TestDeleteUnusedVersionsReturnErrorOnDelete(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{},
+		Installer: &testutils.FakeInstaller{},
 		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{
+		FileHelpers: &testutils.FakeFilesHelper{
 			RecentVersion:        "go1.21.0",
 			DeleteDirectoryError: fmt.Errorf(errorMessage),
 		},
@@ -407,9 +458,9 @@ func TestDeleteUnusedVersionsReturnErrorOnDelete(t *testing.T) {
 
 	count, err := versioner.DeleteUnusedVersions(versions)
 
-	expectedError := fmt.Errorf("an error occurred while deleting bad_version: %s", errorMessage)
+	expectedError := fmt.Errorf("an error occurred while deleting \"bad_version\": %q", errorMessage)
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 
 	if count != 1 {
@@ -477,9 +528,9 @@ func TestGetLatestVersionReturnLatestStableVersion(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
@@ -504,9 +555,9 @@ func TestGetLatestVersionReturnLatestStableVersionNoStableVersionFound(t *testin
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
@@ -517,7 +568,7 @@ func TestGetLatestVersionReturnLatestStableVersionNoStableVersionFound(t *testin
 	}
 }
 
-func TestInstallShouldInstallExistingVersion(t *testing.T) {
+func TestInstallShouldInstallExistingVersionSuccess(t *testing.T) {
 	os := "darwin"
 	arch := "arm64"
 
@@ -531,17 +582,27 @@ func TestInstallShouldInstallExistingVersion(t *testing.T) {
 		},
 	}
 
+	installer := &testutils.FakeInstaller{}
+
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   installer,
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
+	if !installer.ExistingVersionCalled {
+		t.Errorf("ExistingVersion should have been called")
+	}
+
+	if installer.NewVersionCalled {
+		t.Errorf("NewVersion should not have been called")
+	}
+
 	if err != nil {
-		t.Errorf("error should be nil, instead got '%s'", err.Error())
+		t.Errorf("error should be nil, instead got %q", err.Error())
 	}
 }
 
@@ -562,16 +623,16 @@ func TestInstallShouldInstallExistingVersionLogs(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(printer, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err != nil {
-		t.Errorf("error should be nil, instead got '%s'", err.Error())
+		t.Errorf("error should be nil, instead got %q", err.Error())
 	}
 
 	printedMessages := printer.GetPrintMessages()
@@ -583,7 +644,7 @@ func TestInstallShouldInstallExistingVersionLogs(t *testing.T) {
 	}
 }
 
-func TestInstallInstallExistingVersionError(t *testing.T) {
+func TestInstallExistingVersionError(t *testing.T) {
 	os := "darwin"
 	arch := "arm64"
 	expectedError := fmt.Errorf("error while installing version")
@@ -599,25 +660,25 @@ func TestInstallInstallExistingVersionError(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{
+		Installer: &testutils.FakeInstaller{
 			ExistingVersionError: expectedError,
 		},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
 func TestInstallNewVersionFileNameNotFound(t *testing.T) {
 	os := "darwin"
 	arch := "arm64"
-	expectedError := fmt.Errorf("installer not found for %s-%s", os, arch)
+	expectedError := fmt.Errorf("installer not found for %q %q", os, arch)
 
 	ev := version.ExtendedVersion{
 		UsedVersion:      false,
@@ -640,23 +701,23 @@ func TestInstallNewVersionFileNameNotFound(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
 func TestInstallNewVersionChecksumNotFound(t *testing.T) {
 	os := "darwin"
 	arch := "arm64"
-	expectedError := fmt.Errorf("checksum not found for %s-%s", os, arch)
+	expectedError := fmt.Errorf("checksum not found for %q %q", os, arch)
 
 	ev := version.ExtendedVersion{
 		UsedVersion:      false,
@@ -679,23 +740,23 @@ func TestInstallNewVersionChecksumNotFound(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
 func TestInstallNewVersionArchiveNotFound(t *testing.T) {
 	os := "darwin"
 	arch := "arm64"
-	expectedError := fmt.Errorf("installer not found for %s-%s", os, arch)
+	expectedError := fmt.Errorf("installer not found for %q %q", os, arch)
 
 	ev := version.ExtendedVersion{
 		UsedVersion:      false,
@@ -718,20 +779,20 @@ func TestInstallNewVersionArchiveNotFound(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
-func TestInstallNewVersion(t *testing.T) {
+func TestInstallNewVersionSuccess(t *testing.T) {
 	os := "darwin"
 	arch := "arm64"
 
@@ -755,17 +816,27 @@ func TestInstallNewVersion(t *testing.T) {
 		},
 	}
 
+	installer := &testutils.FakeInstaller{}
+
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   installer,
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
+	if !installer.NewVersionCalled {
+		t.Errorf("NewVersionCalled should have been called")
+	}
+
+	if installer.ExistingVersionCalled {
+		t.Errorf("ExistingVersion should not have been called")
+	}
+
 	if err != nil {
-		t.Errorf("error should be nil, instead got '%s'", err.Error())
+		t.Errorf("error should be nil, instead got %q", err.Error())
 	}
 }
 
@@ -796,16 +867,16 @@ func TestInstallNewVersionLogs(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(printer, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err != nil {
-		t.Errorf("error should be nil, instead got '%s'", err.Error())
+		t.Errorf("error should be nil, instead got %q", err.Error())
 	}
 
 	printedMessages := printer.GetPrintMessages()
@@ -843,18 +914,18 @@ func TestInstallNewVersionError(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer: testutils.FakeInstaller{
+		Installer: &testutils.FakeInstaller{
 			NewVersionError: expectedError,
 		},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
 	err := versioner.Install(&ev, os, arch)
 
 	if err.Error() != expectedError.Error() {
-		t.Errorf("error should be '%s', instead got '%s'", expectedError.Error(), err.Error())
+		t.Errorf("error should be %q, instead got %q", expectedError.Error(), err.Error())
 	}
 }
 
@@ -899,9 +970,9 @@ func TestGetPromptVersionsStableOnly(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
@@ -982,9 +1053,9 @@ func TestGetPromptVersionsAllVersions(t *testing.T) {
 	}
 
 	versioner := version.Version{
-		Installer:   testutils.FakeInstaller{},
+		Installer:   &testutils.FakeInstaller{},
 		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: testutils.FakeFilesHelper{},
+		FileHelpers: &testutils.FakeFilesHelper{},
 		Log:         logger.New(&testutils.FakeStdout{}, nil),
 	}
 
@@ -1073,7 +1144,7 @@ func TestExtendedVersionGetPromptNameShowStable(t *testing.T) {
 			res := param.version.GetPromptName(param.showStable)
 
 			if res != param.message {
-				t.Errorf("result should be '%s', instead got '%s'", param.message, res)
+				t.Errorf("result should be %q, instead got %q", param.message, res)
 				t.Fail()
 			}
 		})

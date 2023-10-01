@@ -26,7 +26,6 @@ type Install struct {
 func (i Install) compareChecksums(checksum string) error {
 	hash, err := i.FileHelpers.GetTarChecksum()
 	if err != nil {
-		// TODO: test this
 		i.FileHelpers.RemoveTarFile()
 		return err
 	}

@@ -8,13 +8,15 @@ import (
 
 // TODO: add tests
 func createDirIfNotExist(dir string) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
+	_, err := os.Stat(dir)
+
+	if os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+	return err
 }
 
 type FileUtils interface {
@@ -80,9 +82,6 @@ func (f Files) CreateInitFiles() error {
 		return err
 	}
 	if err := createDirIfNotExist(f.GetVersionsDir()); err != nil {
-		return err
-	}
-	if err := createDirIfNotExist(f.GetBinDir()); err != nil {
 		return err
 	}
 	if err := createDirIfNotExist(f.GetBinDir()); err != nil {

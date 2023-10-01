@@ -13,10 +13,10 @@ func TestConfig(t *testing.T) {
 	cf := config.GetConfig()
 
 	if cf.GO_BASE_URL != baseURL {
-		t.Errorf("GO_BASE_URL should be '%s', instead got '%s'", baseURL, cf.GO_BASE_URL)
+		t.Errorf("GO_BASE_URL should be %q, instead got %q", baseURL, cf.GO_BASE_URL)
 	}
 
 	if cf.REQUEST_TIMEOUT != requestTimeout {
-		t.Errorf("REQUEST_TIMEOUT should be '%d', instead got '%d'", requestTimeout, cf.REQUEST_TIMEOUT)
+		t.Errorf("REQUEST_TIMEOUT should be %q, instead got %q", requestTimeout, cf.REQUEST_TIMEOUT)
 	}
 }
