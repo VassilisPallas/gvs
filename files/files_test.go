@@ -35,11 +35,10 @@ func TestCreateTarFile(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	fileContent := "foo"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.CreateTarFile(nopCloser{bytes.NewBufferString(fileContent)})
 
@@ -64,11 +63,10 @@ func TestCreateTarFileToPathThatDoesNotExist(t *testing.T) {
 	fileContent := "foo"
 	expectedError := fmt.Errorf("open /some_other_dst/some_file.tar.gz: no such file or directory")
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.CreateTarFile(nopCloser{bytes.NewBufferString(fileContent)})
 
@@ -82,11 +80,10 @@ func TestCreateTarFileCopyFailed(t *testing.T) {
 	fileContent := "foo"
 	expectedError := fmt.Errorf("some error while copying")
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.CreateTarFile(nopCloserWriter{writerError: expectedError, Reader: bytes.NewBufferString(fileContent)})
 
@@ -102,11 +99,10 @@ func TestGetTarChecksum(t *testing.T) {
 	fileContent := "foo"
 	expectedHash := "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	// Create file for the test
 	helper.CreateTarFile(nopCloser{bytes.NewBufferString(fileContent)})
@@ -127,11 +123,10 @@ func TestGetTarChecksumFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	expectedError := fmt.Errorf("open /tmp/some_file.tar.gz: no such file or directory")
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	hash, err := helper.GetTarChecksum()
 
@@ -148,11 +143,10 @@ func TestRenameGoDirectory(t *testing.T) {
 	dirLocation := "/tmp/some_dir"
 	goVersion := "go1.21.0"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			VersionDir: dirLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		VersionDir: dirLocation,
 	}
+	helper := files.New(fileUtils)
 
 	os.MkdirAll(fmt.Sprintf("%s/%s", dirLocation, "go"), 0755)
 	defer os.RemoveAll(dirLocation)
@@ -173,11 +167,10 @@ func TestRemoveTarFile(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	fileContent := "foo"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	// Create file for the test
 	helper.CreateTarFile(nopCloser{bytes.NewBufferString(fileContent)})
@@ -197,11 +190,10 @@ func TestRemoveTarFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/tmp/some_file.tar.gz"
 	expectedError := fmt.Errorf("remove /tmp/some_file.tar.gz: no such file or directory")
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			TarFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		TarFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.RemoveTarFile()
 
@@ -214,11 +206,10 @@ func TestUpdateRecentVersion(t *testing.T) {
 	fileLocation := "/tmp/CURRENT"
 	goVersion := "go1.21.0"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			CurrentVersionFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		CurrentVersionFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.UpdateRecentVersion(goVersion)
 	defer os.Remove(fileLocation)
@@ -241,12 +232,11 @@ func TestStoreVersionsResponse(t *testing.T) {
 	appDir := "/tmp"
 	versionResponseFile := "goVersions.json"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			AppDir:                  appDir,
-			VersionResponseFileName: versionResponseFile,
-		},
+	fileUtils := testutils.FakeFiler{
+		AppDir:                  appDir,
+		VersionResponseFileName: versionResponseFile,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.StoreVersionsResponse([]byte("Some content"))
 
@@ -261,13 +251,11 @@ func TestStoreVersionsResponseShouldNotFailWithEmptyContent(t *testing.T) {
 	appDir := "/tmp"
 	versionResponseFile := "goVersions.json"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			AppDir:                  appDir,
-			VersionResponseFileName: versionResponseFile,
-		},
+	fileUtils := testutils.FakeFiler{
+		AppDir:                  appDir,
+		VersionResponseFileName: versionResponseFile,
 	}
-
+	helper := files.New(fileUtils)
 	err := helper.StoreVersionsResponse([]byte(""))
 
 	defer os.Remove(fmt.Sprintf("%s/%s", appDir, versionResponseFile))
@@ -282,12 +270,11 @@ func TestStoreVersionsResponseFileToPathThatDoesNotExist(t *testing.T) {
 	versionResponseFile := "goVersions.json"
 	expectedError := fmt.Errorf("open /some_other_dst/goVersions.json: no such file or directory")
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			AppDir:                  appDir,
-			VersionResponseFileName: versionResponseFile,
-		},
+	fileUtils := testutils.FakeFiler{
+		AppDir:                  appDir,
+		VersionResponseFileName: versionResponseFile,
 	}
+	helper := files.New(fileUtils)
 
 	err := helper.StoreVersionsResponse([]byte("Some content"))
 
@@ -300,13 +287,11 @@ func TestGetCachedResponse(t *testing.T) {
 	appDir := "/tmp"
 	versionResponseFile := "goVersions.json"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			AppDir:                  appDir,
-			VersionResponseFileName: versionResponseFile,
-		},
+	fileUtils := testutils.FakeFiler{
+		AppDir:                  appDir,
+		VersionResponseFileName: versionResponseFile,
 	}
-
+	helper := files.New(fileUtils)
 	responseVersionsMap := []map[string]interface{}{
 		{
 			"version": "go1.21.0",
@@ -356,12 +341,11 @@ func TestGetCachedResponseFileToPathThatDoesNotExist(t *testing.T) {
 	versionResponseFile := "goVersions.json"
 	expectedError := fmt.Errorf("open /some_other_dst/goVersions.json: no such file or directory")
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			AppDir:                  appDir,
-			VersionResponseFileName: versionResponseFile,
-		},
+	fileUtils := testutils.FakeFiler{
+		AppDir:                  appDir,
+		VersionResponseFileName: versionResponseFile,
 	}
+	helper := files.New(fileUtils)
 
 	var responseVersions []api_client.VersionInfo
 	err := helper.GetCachedResponse(&responseVersions)
@@ -375,12 +359,11 @@ func TestGetCachedResponseUnmarshalFailed(t *testing.T) {
 	appDir := "/tmp"
 	versionResponseFile := "goVersions.json"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			AppDir:                  appDir,
-			VersionResponseFileName: versionResponseFile,
-		},
+	fileUtils := testutils.FakeFiler{
+		AppDir:                  appDir,
+		VersionResponseFileName: versionResponseFile,
 	}
+	helper := files.New(fileUtils)
 
 	helper.StoreVersionsResponse([]byte("{foo: bar}")) // force syntax error to response body
 
@@ -399,11 +382,10 @@ func TestGetRecentVersion(t *testing.T) {
 	fileLocation := "/tmp/CURRENT"
 	goVersion := "go1.21.0"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			CurrentVersionFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		CurrentVersionFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	file, _ := os.Create(fileLocation)
 	io.WriteString(file, goVersion)
@@ -418,11 +400,10 @@ func TestGetRecentVersion(t *testing.T) {
 func TestGetRecentVersionFileToPathThatDoesNotExist(t *testing.T) {
 	fileLocation := "/some_other_dst/CURRENT"
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			CurrentVersionFile: fileLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		CurrentVersionFile: fileLocation,
 	}
+	helper := files.New(fileUtils)
 
 	content := helper.GetRecentVersion()
 
@@ -437,11 +418,10 @@ func TestDirectoryExists(t *testing.T) {
 
 	path := fmt.Sprintf("%s/%s", dirLocation, goVersion)
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			VersionDir: dirLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		VersionDir: dirLocation,
 	}
+	helper := files.New(fileUtils)
 
 	os.MkdirAll(path, 0755)
 
@@ -460,11 +440,10 @@ func TestDirectoryExistsDirectoryNotFound(t *testing.T) {
 
 	path := fmt.Sprintf("%s/%s", dirLocation, goVersion)
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			VersionDir: dirLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		VersionDir: dirLocation,
 	}
+	helper := files.New(fileUtils)
 
 	exists := helper.DirectoryExists(goVersion)
 
@@ -479,11 +458,10 @@ func TestDeleteDirectory(t *testing.T) {
 
 	path := fmt.Sprintf("%s/%s", dirLocation, goVersion)
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			VersionDir: dirLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		VersionDir: dirLocation,
 	}
+	helper := files.New(fileUtils)
 
 	os.MkdirAll(path, 0755)
 
@@ -502,11 +480,10 @@ func TestDeleteDirectoryDeleteFails(t *testing.T) {
 
 	path := fmt.Sprintf("%s/%s", dirLocation, goVersion)
 
-	helper := files.Helper{
-		FileUtils: testutils.FakeFiler{
-			VersionDir: dirLocation,
-		},
+	fileUtils := testutils.FakeFiler{
+		VersionDir: dirLocation,
 	}
+	helper := files.New(fileUtils)
 
 	os.MkdirAll(path, 0755)
 

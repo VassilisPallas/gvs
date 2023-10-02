@@ -2,6 +2,7 @@ package version
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -95,13 +96,22 @@ func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error
 		if err != nil {
 			return nil, err
 		}
+
+		bytes, err := json.Marshal(responseVersions)
+		if err != nil {
+			return nil, err
+		}
+
+		err = v.FileHelpers.StoreVersionsResponse(bytes)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		err := v.FileHelpers.GetCachedResponse(&responseVersions)
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	versions := make([]*ExtendedVersion, 0, len(responseVersions))
 	for _, rv := range responseVersions {
 		version := &ExtendedVersion{VersionInfo: rv}

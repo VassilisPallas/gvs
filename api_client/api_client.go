@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
-	"github.com/VassilisPallas/gvs/config"
 	"github.com/VassilisPallas/gvs/errors"
 )
 
@@ -22,8 +20,8 @@ type GoClientAPI interface {
 }
 
 type Go struct {
-	Client HTTPClient
-	Config config.Configuration
+	client  HTTPClient
+	baseURL string
 
 	GoClientAPI
 }
@@ -45,12 +43,12 @@ type VersionInfo struct {
 }
 
 func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/?mode=json&include=all", g.Config.GO_BASE_URL), nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/?mode=json&include=all", g.baseURL), nil)
 	if err != nil {
 		return err
 	}
 
-	response, err := g.Client.Do(request)
+	response, err := g.client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -73,13 +71,13 @@ func (g Go) FetchVersions(ctx context.Context, v *[]VersionInfo) error {
 }
 
 func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body io.ReadCloser) error) error {
-	url := fmt.Sprintf("%s/%s", g.Config.GO_BASE_URL, filename)
+	url := fmt.Sprintf("%s/%s", g.baseURL, filename)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
 
-	response, err := g.Client.Do(request)
+	response, err := g.client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -97,8 +95,6 @@ func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body i
 }
 
 // TODO: check if should return *Go
-func New(config config.Configuration) Go {
-	return Go{Client: &http.Client{
-		Timeout: time.Duration(config.REQUEST_TIMEOUT) * time.Second,
-	}, Config: config}
+func New(client HTTPClient, baseURL string) Go {
+	return Go{client: client, baseURL: baseURL}
 }

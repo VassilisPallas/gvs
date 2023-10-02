@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/VassilisPallas/gvs/api_client"
-	"github.com/VassilisPallas/gvs/config"
 	"github.com/VassilisPallas/gvs/internal/testutils"
 	"github.com/google/go-cmp/cmp"
 )
@@ -62,13 +61,12 @@ func TestFetchVersionsSuccess(t *testing.T) {
 
 	responseBody, _ := json.Marshal(responseVersions)
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopCloser{bytes.NewBuffer(responseBody)},
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopCloser{bytes.NewBuffer(responseBody)},
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
@@ -93,13 +91,12 @@ func TestFetchVersionsSuccess(t *testing.T) {
 func TestFetchVersionNewRequestWithContextError(t *testing.T) {
 	expectedError := fmt.Errorf("parse \" https://go.dev/dl/?mode=json&include=all\": first path segment in URL cannot contain colon")
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopCloser{bytes.NewBufferString("")},
-		},
-		Config: config.Configuration{GO_BASE_URL: " https://go.dev/dl", REQUEST_TIMEOUT: 10}, // add space to URL to raise an error
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopCloser{bytes.NewBufferString("")},
 	}
+
+	goRepo := api_client.New(client, " https://go.dev/dl") // add space to URL to raise an error
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.TODO(), &versions)
@@ -117,13 +114,12 @@ func TestFetchVersionNewRequestWithContextError(t *testing.T) {
 func TestFetchVersionsNonOkStatus(t *testing.T) {
 	expectedError := fmt.Errorf("request failed with status %d", http.StatusBadRequest)
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusBadRequest,
-			Body:   nil,
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusBadRequest,
+		Body:   nil,
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
@@ -136,14 +132,13 @@ func TestFetchVersionsNonOkStatus(t *testing.T) {
 func TestFetchVersionsRequestFailed(t *testing.T) {
 	expectedError := fmt.Errorf("Some error")
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status:       http.StatusBadRequest,
-			Body:         nil,
-			RequestError: expectedError,
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status:       http.StatusBadRequest,
+		Body:         nil,
+		RequestError: expectedError,
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
@@ -154,13 +149,12 @@ func TestFetchVersionsRequestFailed(t *testing.T) {
 }
 
 func TestFetchVersionsUnmarshalFailed(t *testing.T) {
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopCloser{bytes.NewBufferString("{foo: bar}")}, // force syntax error to response body
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopCloser{bytes.NewBufferString("{foo: bar}")}, // force syntax error to response body
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
@@ -174,13 +168,12 @@ func TestFetchVersionsUnmarshalFailed(t *testing.T) {
 func TestFetchVersionsReadBodyFailed(t *testing.T) {
 	expectedError := fmt.Errorf("some error while reading body")
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopReaderCloser{readError: expectedError, Reader: bytes.NewBufferString("")},
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopReaderCloser{readError: expectedError, Reader: bytes.NewBufferString("")},
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	var versions []api_client.VersionInfo
 	err := goRepo.FetchVersions(context.Background(), &versions)
@@ -196,13 +189,12 @@ func TestDownloadVersionSuccess(t *testing.T) {
 		return nil
 	}
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopCloser{bytes.NewBufferString("foo")},
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopCloser{bytes.NewBufferString("foo")},
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
@@ -219,13 +211,12 @@ func TestDownloadVersionNewRequestWithContextError(t *testing.T) {
 		return nil
 	}
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopCloser{bytes.NewBufferString("foo")},
-		},
-		Config: config.Configuration{GO_BASE_URL: " https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopCloser{bytes.NewBufferString("foo")},
 	}
+
+	goRepo := api_client.New(client, " https://go.dev/dl") // add space to URL to raise an error
 
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
@@ -240,13 +231,12 @@ func TestDownloadVersionNonOkStatus(t *testing.T) {
 		return nil
 	}
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusBadRequest,
-			Body:   nil,
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusBadRequest,
+		Body:   nil,
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
@@ -262,14 +252,13 @@ func TestDownloadVersionRequestFailed(t *testing.T) {
 		return nil
 	}
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status:       http.StatusBadRequest,
-			Body:         nil,
-			RequestError: expectedError,
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status:       http.StatusBadRequest,
+		Body:         nil,
+		RequestError: expectedError,
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 
@@ -285,13 +274,12 @@ func TestDownloadVersionCallbackFailed(t *testing.T) {
 		return expectedError
 	}
 
-	goRepo := &api_client.Go{
-		Client: testutils.MockClient{
-			Status: http.StatusOK,
-			Body:   nopCloser{bytes.NewBufferString("foo")},
-		},
-		Config: config.Configuration{GO_BASE_URL: "https://go.dev/dl", REQUEST_TIMEOUT: 10},
+	client := testutils.MockClient{
+		Status: http.StatusOK,
+		Body:   nopCloser{bytes.NewBufferString("foo")},
 	}
+
+	goRepo := api_client.New(client, "https://go.dev/dl")
 
 	err := goRepo.DownloadVersion(context.Background(), "some_file_name", cb)
 

@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/VassilisPallas/gvs/api_client"
 	cf "github.com/VassilisPallas/gvs/config"
@@ -33,15 +35,15 @@ func parseFlags() {
 }
 
 func init() {
-	logFile, err := filesUtils.CreateLogFile()
-	log = logger.New(os.Stdout, logFile)
-	if err != nil {
+	if err := filesUtils.CreateInitFiles(); err != nil {
 		log.PrintError(err.Error())
 		os.Exit(1)
 		return
 	}
 
-	if err := filesUtils.CreateInitFiles(); err != nil {
+	logFile, err := filesUtils.CreateLogFile()
+	log = logger.New(os.Stdout, logFile)
+	if err != nil {
 		log.PrintError(err.Error())
 		os.Exit(1)
 		return
@@ -55,7 +57,12 @@ func main() {
 	defer log.Close()
 
 	config := cf.GetConfig()
-	clientAPI := api_client.New(config)
+
+	httpClient := &http.Client{
+		Timeout: time.Duration(config.REQUEST_TIMEOUT) * time.Second,
+	}
+
+	clientAPI := api_client.New(httpClient, config.GO_BASE_URL)
 	fileHelpers := files.New(filesUtils)
 	installer := install.New(fileHelpers, clientAPI, log)
 

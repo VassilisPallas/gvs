@@ -6,19 +6,6 @@ import (
 	"os/user"
 )
 
-// TODO: add tests
-func createDirIfNotExist(dir string) error {
-	_, err := os.Stat(dir)
-
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
-	}
-	return err
-}
-
 type FileUtils interface {
 	GetHomeDirectory() string
 	GetAppDir() string
@@ -39,6 +26,8 @@ type Files struct {
 	binDir                 string
 	currentVersionFileName string
 	logFile                string
+
+	FileSystem FS
 
 	FileUtils
 }
@@ -78,13 +67,13 @@ func (f Files) GetVersionResponseFile() string {
 
 // TODO: add tests
 func (f Files) CreateInitFiles() error {
-	if err := createDirIfNotExist(f.GetAppDir()); err != nil {
+	if err := f.FileSystem.MkdirIfNotExist(f.GetAppDir(), 0755); err != nil {
 		return err
 	}
-	if err := createDirIfNotExist(f.GetVersionsDir()); err != nil {
+	if err := f.FileSystem.MkdirIfNotExist(f.GetVersionsDir(), 0755); err != nil {
 		return err
 	}
-	if err := createDirIfNotExist(f.GetBinDir()); err != nil {
+	if err := f.FileSystem.MkdirIfNotExist(f.GetBinDir(), 0755); err != nil {
 		return err
 	}
 
@@ -94,7 +83,7 @@ func (f Files) CreateInitFiles() error {
 // TODO: add tests
 func (f Files) CreateLogFile() (*os.File, error) {
 	filename := fmt.Sprintf("%s/%s", f.GetAppDir(), f.logFile)
-	return os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	return f.FileSystem.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 }
 
 func NewUtils() *Files {
@@ -106,5 +95,6 @@ func NewUtils() *Files {
 		binDir:                 "bin",
 		currentVersionFileName: "CURRENT",
 		logFile:                "gvs.log",
+		FileSystem:             FileSystem{},
 	}
 }

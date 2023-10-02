@@ -14,11 +14,11 @@ import (
 func TestInstallExistingVersionSuccess(t *testing.T) {
 	version := "go1.21.0"
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.ExistingVersion(version)
 
@@ -32,11 +32,11 @@ func TestInstallExistingVersionSuccessLogs(t *testing.T) {
 
 	version := "go1.21.0"
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		Log:         logger.New(printer, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(printer, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.ExistingVersion(version)
 
@@ -57,13 +57,13 @@ func TestInstallExistingVersionFailedSymlinkCreation(t *testing.T) {
 	version := "go1.21.0"
 	expectedError := fmt.Errorf("An error occurred while creating the symlink")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			CreateExecutableSymlinkError: expectedError,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		CreateExecutableSymlinkError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.ExistingVersion(version)
 
@@ -76,13 +76,13 @@ func TestInstallExistingVersionFailedUpdateVersionFile(t *testing.T) {
 	version := "go1.21.0"
 	expectedError := fmt.Errorf("An error occurred while updating the version file")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			UpdateRecentVersionError: expectedError,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		UpdateRecentVersionError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.ExistingVersion(version)
 
@@ -95,13 +95,13 @@ func TestInstallNewVersionSuccess(t *testing.T) {
 	version := "go1.21.0"
 	checksum := "some_checksum"
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum: checksum,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum: checksum,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -116,13 +116,13 @@ func TestInstallNewVersionSuccessLogs(t *testing.T) {
 	version := "go1.21.0"
 	checksum := "some_checksum"
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum: checksum,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(printer, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum: checksum,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(printer, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -148,13 +148,13 @@ func TestInstallNewVersionFailCreateTarFile(t *testing.T) {
 
 	expectedError := fmt.Errorf("An error occurred while creating the TAR file")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			CreateTarFileError: expectedError,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		CreateTarFileError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -167,21 +167,20 @@ func TestInstallNewVersionFailGetFileChecksum(t *testing.T) {
 	expectedError := fmt.Errorf("some error")
 	checksum := ""
 
-	fileHelper := &testutils.FakeFilesHelper{
+	version := "go1.21.0"
+
+	fileHelpers := &testutils.FakeFilesHelper{
 		Checksum:            checksum,
 		GetTarChecksumError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
 
-	version := "go1.21.0"
-	installer := install.Install{
-		FileHelpers: fileHelper,
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
-	if !fileHelper.RemoveTarFileCalled {
+	if !fileHelpers.RemoveTarFileCalled {
 		t.Errorf("RemoveTarFileCalled has not been called")
 	}
 
@@ -194,13 +193,13 @@ func TestInstallNewVersionFailChecksumMissmatch(t *testing.T) {
 	version := "go1.21.0"
 	checksum := "some_checksum"
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum: "some_other_checksum",
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum: "some_other_checksum",
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -216,14 +215,14 @@ func TestInstallNewVersionFailUnzipTarFile(t *testing.T) {
 
 	expectedError := fmt.Errorf("An error occurred while unzipping the TAR file")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum:       checksum,
-			UnzippingError: expectedError,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum:       checksum,
+		UnzippingError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -238,14 +237,14 @@ func TestInstallNewVersionFailRenameDirectory(t *testing.T) {
 
 	expectedError := fmt.Errorf("An error occurred while renaming the directory")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum:             checksum,
-			RenameDirectoryError: expectedError,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum:             checksum,
+		RenameDirectoryError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -260,14 +259,14 @@ func TestInstallNewVersionFailRemoveTarFile(t *testing.T) {
 
 	expectedError := fmt.Errorf("An error occurred while removing the tart file")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum:           checksum,
-			RemoveTarFileError: expectedError,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		Log:       logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum:           checksum,
+		RemoveTarFileError: expectedError,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 
@@ -282,15 +281,15 @@ func TestInstallNewVersionFailRequest(t *testing.T) {
 
 	expectedError := fmt.Errorf("An error occurred while downloading the file")
 
-	installer := install.Install{
-		FileHelpers: &testutils.FakeFilesHelper{
-			Checksum: checksum,
-		},
-		ClientAPI: testutils.FakeGoClientAPI{
-			DownloadError: expectedError,
-		},
-		Log: logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		Checksum: checksum,
 	}
+	clientAPI := testutils.FakeGoClientAPI{
+		DownloadError: expectedError,
+	}
+	logger := logger.New(&testutils.FakeStdout{}, nil)
+
+	installer := install.New(fileHelpers, clientAPI, logger)
 
 	err := installer.NewVersion(context.Background(), "some_file_name", checksum, version)
 

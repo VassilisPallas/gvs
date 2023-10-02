@@ -12,12 +12,12 @@ import (
 )
 
 func TestFilterAlreadyDownloadedVersionsReturnInstalledVersions(t *testing.T) {
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	evs := []*version.ExtendedVersion{
 		{
@@ -72,12 +72,12 @@ func TestFilterAlreadyDownloadedVersionsReturnInstalledVersions(t *testing.T) {
 }
 
 func TestFilterAlreadyDownloadedVersionsReturnEmptyResults(t *testing.T) {
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	evs := []*version.ExtendedVersion{
 		{
@@ -135,12 +135,12 @@ func TestGetVersionsFromRequest(t *testing.T) {
 
 	for _, forceFetchVersions := range parameters {
 		t.Run(fmt.Sprintf("with forceFetchVersions %t", forceFetchVersions), func(t *testing.T) {
-			versioner := version.Version{
-				Installer:   &testutils.FakeInstaller{},
-				ClientAPI:   testutils.FakeGoClientAPI{},
-				FileHelpers: &testutils.FakeFilesHelper{},
-				Log:         logger.New(&testutils.FakeStdout{}, nil),
-			}
+			fileHelpers := &testutils.FakeFilesHelper{}
+			clientAPI := testutils.FakeGoClientAPI{}
+			installer := &testutils.FakeInstaller{}
+			log := logger.New(&testutils.FakeStdout{}, nil)
+
+			versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 			versions, err := versioner.GetVersions(forceFetchVersions)
 
@@ -160,14 +160,14 @@ func TestGetVersionsFromRequest(t *testing.T) {
 func TestGetVersionsRequestError(t *testing.T) {
 	expectedError := fmt.Errorf("An error happened")
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{
-			FetchVersionsError: expectedError,
-		},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{
+		FetchVersionsError: expectedError,
 	}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	versions, err := versioner.GetVersions(true)
 
@@ -181,14 +181,14 @@ func TestGetVersionsRequestError(t *testing.T) {
 }
 
 func TestGetVersionsFromCache(t *testing.T) {
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{
-			CachedVersion: true,
-		},
-		Log: logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		CachedVersion: true,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	versions, err := versioner.GetVersions(false)
 
@@ -202,16 +202,16 @@ func TestGetVersionsFromCache(t *testing.T) {
 }
 
 func TestGetVersionsAddCorrectExtras(t *testing.T) {
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{
-			CachedVersion:             true,
-			RecentVersion:             "go1.21.0",
-			AlreadyDownloadedVersions: []string{"go1.21.0", "go1.19.0"},
-		},
-		Log: logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		CachedVersion:             true,
+		RecentVersion:             "go1.21.0",
+		AlreadyDownloadedVersions: []string{"go1.21.0", "go1.19.0"},
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	versions, err := versioner.GetVersions(false)
 
@@ -255,15 +255,15 @@ func TestGetVersionsAddCorrectExtras(t *testing.T) {
 func TestGetVersionsFromCacheError(t *testing.T) {
 	expectedError := fmt.Errorf("An error happened")
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{
-			CacheResponseError: expectedError,
-			CachedVersion:      true,
-		},
-		Log: logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		CacheResponseError: expectedError,
+		CachedVersion:      true,
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	versions, err := versioner.GetVersions(false)
 
@@ -318,14 +318,14 @@ func TestDeleteUnusedVersionsDeleteAllUnusedVersions(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{
-			RecentVersion: "go1.21.0",
-		},
-		Log: logger.New(printer, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		RecentVersion: "go1.21.0",
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(printer, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	count, err := versioner.DeleteUnusedVersions(versions)
 
@@ -391,14 +391,14 @@ func TestDeleteUnusedVersionsReturnErrorWhenNoRecentVersion(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{
-			RecentVersion: "",
-		},
-		Log: logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		RecentVersion: "",
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	count, err := versioner.DeleteUnusedVersions(versions)
 
@@ -446,15 +446,15 @@ func TestDeleteUnusedVersionsReturnErrorOnDelete(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{},
-		ClientAPI: testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{
-			RecentVersion:        "go1.21.0",
-			DeleteDirectoryError: fmt.Errorf(errorMessage),
-		},
-		Log: logger.New(printer, nil),
+	fileHelpers := &testutils.FakeFilesHelper{
+		RecentVersion:        "go1.21.0",
+		DeleteDirectoryError: fmt.Errorf(errorMessage),
 	}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(printer, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	count, err := versioner.DeleteUnusedVersions(versions)
 
@@ -527,12 +527,12 @@ func TestGetLatestVersionReturnLatestStableVersion(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	index := versioner.GetLatestVersion(versions)
 
@@ -554,12 +554,12 @@ func TestGetLatestVersionReturnLatestStableVersionNoStableVersionFound(t *testin
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	index := versioner.GetLatestVersion(versions)
 
@@ -582,14 +582,12 @@ func TestInstallShouldInstallExistingVersionSuccess(t *testing.T) {
 		},
 	}
 
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
 	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
 
-	versioner := version.Version{
-		Installer:   installer,
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -622,12 +620,12 @@ func TestInstallShouldInstallExistingVersionLogs(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(printer, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(printer, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -659,14 +657,14 @@ func TestInstallExistingVersionError(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{
-			ExistingVersionError: expectedError,
-		},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{
+		ExistingVersionError: expectedError,
 	}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -700,12 +698,12 @@ func TestInstallNewVersionFileNameNotFound(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -739,12 +737,12 @@ func TestInstallNewVersionChecksumNotFound(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -778,12 +776,12 @@ func TestInstallNewVersionArchiveNotFound(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -816,14 +814,12 @@ func TestInstallNewVersionSuccess(t *testing.T) {
 		},
 	}
 
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
 	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
 
-	versioner := version.Version{
-		Installer:   installer,
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -866,12 +862,12 @@ func TestInstallNewVersionLogs(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(printer, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(printer, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -913,14 +909,14 @@ func TestInstallNewVersionError(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer: &testutils.FakeInstaller{
-			NewVersionError: expectedError,
-		},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{
+		NewVersionError: expectedError,
 	}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	err := versioner.Install(&ev, os, arch)
 
@@ -969,12 +965,12 @@ func TestGetPromptVersionsStableOnly(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	expectedVersions := []*version.ExtendedVersion{
 		{
@@ -1052,12 +1048,12 @@ func TestGetPromptVersionsAllVersions(t *testing.T) {
 		},
 	}
 
-	versioner := version.Version{
-		Installer:   &testutils.FakeInstaller{},
-		ClientAPI:   testutils.FakeGoClientAPI{},
-		FileHelpers: &testutils.FakeFilesHelper{},
-		Log:         logger.New(&testutils.FakeStdout{}, nil),
-	}
+	fileHelpers := &testutils.FakeFilesHelper{}
+	clientAPI := testutils.FakeGoClientAPI{}
+	installer := &testutils.FakeInstaller{}
+	log := logger.New(&testutils.FakeStdout{}, nil)
+
+	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	filteredVersions := versioner.GetPromptVersions(versions, true)
 
