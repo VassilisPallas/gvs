@@ -33,19 +33,22 @@ func parseFlags() {
 
 func main() {
 	config := cf.GetConfig()
+	log := logger.New(os.Stdout, nil)
+
 	filesUtils := files.NewUtils()
 	fileHelpers := files.New(filesUtils)
-	log := logger.New(os.Stdout, nil)
 
 	logFile, err := fileHelpers.CreateInitFiles()
 
 	if err != nil {
+		// this will be print only on the terminal since
+		// the logger output is nil
 		log.PrintError(err.Error())
 		os.Exit(1)
 		return
 	}
 
-	log = logger.New(os.Stdout, logFile)
+	log.SetLogWriter(logFile)
 	defer log.Close() // close log file after the execution
 
 	parseFlags()

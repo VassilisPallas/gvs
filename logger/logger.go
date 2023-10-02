@@ -13,6 +13,7 @@ type Logger interface {
 	Info(format string, a ...any)
 	Error(format string, a ...any)
 	Close()
+	SetLogWriter(logWriter io.WriteCloser)
 }
 
 type Log struct {
@@ -77,6 +78,11 @@ func (l *Log) Error(format string, a ...any) {
 
 func (l *Log) Close() {
 	l.logWriter.Close()
+}
+
+func (l *Log) SetLogWriter(logWriter io.WriteCloser) {
+	l.logWriter = logWriter
+	l.logger.SetOutput(logWriter)
 }
 
 func New(cliWriter io.Writer, logWriter io.WriteCloser) *Log {
