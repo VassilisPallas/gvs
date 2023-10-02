@@ -24,8 +24,6 @@ type Files struct {
 	binDir                 string
 	currentVersionFileName string
 	logFile                string
-
-	FileUtils
 }
 
 func (f Files) GetHomeDirectory() string {

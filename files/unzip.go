@@ -3,6 +3,7 @@ package files
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"strings"
 )
 
+// TODO: add tests
 type Unziper interface {
 	UnzipSource(dst string, src string) error
 	UnzipFile(tarReader *tar.Reader, header *tar.Header, dst string) error
@@ -36,7 +38,7 @@ func (u Unzip) UnzipSource(dst string, src string) error {
 	for {
 		header, err := tarReader.Next()
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 

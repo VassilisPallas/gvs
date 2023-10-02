@@ -22,8 +22,6 @@ type GoClientAPI interface {
 type Go struct {
 	client  HTTPClient
 	baseURL string
-
-	GoClientAPI
 }
 
 type FileInformation struct {

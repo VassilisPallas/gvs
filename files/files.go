@@ -34,8 +34,6 @@ type Helper struct {
 	fileUtils  FileUtils
 	unzip      Unziper
 	fileSystem FS
-
-	FileHelpers
 }
 
 func (h Helper) CreateTarFile(content io.ReadCloser) error {
@@ -110,13 +108,20 @@ func (h Helper) CreateExecutableSymlink(goVersionName string) error {
 		link := fmt.Sprintf("%s/%s", h.fileUtils.GetBinDir(), f.Name())
 
 		if _, err := h.fileSystem.Lstat(link); err == nil {
-			h.fileSystem.Remove(link)
+			// TODO: send to logger instead
+			err := h.fileSystem.Remove(link)
+			if err != nil {
+				return err
+			}
 		}
 
 		if err := h.fileSystem.Symlink(newFile, link); err != nil {
 			return err
 		}
-		h.fileSystem.Chmod(link, 0700)
+
+		if err := h.fileSystem.Chmod(link, 0700); err != nil {
+			return err
+		}
 	}
 
 	return nil

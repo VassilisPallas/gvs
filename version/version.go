@@ -28,8 +28,6 @@ type Version struct {
 	clientAPI   api_client.GoClientAPI
 	fileHelpers files.FileHelpers
 	log         *logger.Log
-
-	Versioner
 }
 
 type ExtendedVersion struct {

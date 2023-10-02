@@ -19,14 +19,17 @@ type Install struct {
 	fileHelpers files.FileHelpers
 	clientAPI   api_client.GoClientAPI
 	log         *logger.Log
-
-	Installer
 }
 
 func (i Install) compareChecksums(checksum string) error {
 	hash, err := i.fileHelpers.GetTarChecksum()
 	if err != nil {
-		i.fileHelpers.RemoveTarFile()
+		removeTarErr := i.fileHelpers.RemoveTarFile()
+		// TODO: send to logger instead
+		if removeTarErr != nil {
+			return removeTarErr
+		}
+
 		return err
 	}
 
