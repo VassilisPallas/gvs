@@ -11,7 +11,7 @@ import (
 )
 
 func TestPrintMessage(t *testing.T) {
-	msg := "some message"
+	msg := "some message\n"
 	cliWriter := &testutils.FakeStdout{}
 	logWriter := &testutils.FakeStdout{}
 
@@ -34,7 +34,7 @@ func TestPrintMessage(t *testing.T) {
 }
 
 func TestPrintError(t *testing.T) {
-	msg := "some error"
+	msg := "some error\n"
 	cliWriter := &testutils.FakeStdout{}
 	logWriter := &testutils.FakeStdout{}
 
@@ -71,4 +71,8 @@ func TestClose(t *testing.T) {
 	if logWriter.Closed != true {
 		t.Error("logWriter should be closed")
 	}
+}
+
+func TestNewLine(t *testing.T) {
+
 }

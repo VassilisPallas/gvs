@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 )
 
 type Logger interface {
@@ -20,13 +21,25 @@ type Log struct {
 	logger    *log.Logger
 }
 
+func (l Log) addNewLine(format string) string {
+	newLine := "\n"
+
+	if strings.HasSuffix(format, newLine) {
+		return format
+	}
+
+	return format + newLine
+}
+
 func (l *Log) PrintMessage(format string, a ...any) {
 	if l.cliWriter == nil {
 		return
 	}
 
-	fmt.Fprintf(l.cliWriter, format, a...)
-	l.Info(format, a...)
+	message := l.addNewLine(format)
+
+	fmt.Fprintf(l.cliWriter, message, a...)
+	l.Info(message, a...)
 }
 
 func (l *Log) PrintError(format string, a ...any) {
@@ -34,8 +47,10 @@ func (l *Log) PrintError(format string, a ...any) {
 		return
 	}
 
-	fmt.Fprintf(l.cliWriter, format, a...)
-	l.Error(format, a...)
+	message := l.addNewLine(format)
+
+	fmt.Fprintf(l.cliWriter, l.addNewLine(message), a...)
+	l.Error(message, a...)
 }
 
 func (l *Log) Info(format string, a ...any) {
@@ -43,8 +58,10 @@ func (l *Log) Info(format string, a ...any) {
 		return
 	}
 
+	message := l.addNewLine(format)
+
 	l.logger.SetPrefix("INFO: ")
-	l.logger.Printf(format, a...)
+	l.logger.Printf(message, a...)
 }
 
 func (l *Log) Error(format string, a ...any) {
@@ -52,8 +69,10 @@ func (l *Log) Error(format string, a ...any) {
 		return
 	}
 
+	message := l.addNewLine(format)
+
 	l.logger.SetPrefix("ERROR: ")
-	l.logger.Printf(format, a...)
+	l.logger.Printf(message, a...)
 }
 
 func (l *Log) Close() {
