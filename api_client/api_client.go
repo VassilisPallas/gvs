@@ -92,7 +92,6 @@ func (g Go) DownloadVersion(ctx context.Context, filename string, cb func(body i
 	return nil
 }
 
-// TODO: check if should return *Go
 func New(client HTTPClient, baseURL string) Go {
 	return Go{client: client, baseURL: baseURL}
 }

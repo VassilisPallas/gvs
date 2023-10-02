@@ -26,8 +26,7 @@ type FileHelpers interface {
 	GetRecentVersion() string
 	DirectoryExists(goVersion string) bool
 	DeleteDirectory(dirName string) error
-	CreateInitFiles() error
-	CreateLogFile() (*os.File, error)
+	CreateInitFiles() (*os.File, error)
 }
 
 type Helper struct {
@@ -203,22 +202,18 @@ func (h Helper) DeleteDirectory(dirName string) error {
 }
 
 // TODO: add tests
-func (h Helper) CreateInitFiles() error {
+func (h Helper) CreateInitFiles() (*os.File, error) {
 	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetAppDir(), 0755); err != nil {
-		return err
+		return nil, err
 	}
 	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetVersionsDir(), 0755); err != nil {
-		return err
+		return nil, err
 	}
 	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetBinDir(), 0755); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
-}
-
-// TODO: add tests
-func (h Helper) CreateLogFile() (*os.File, error) {
+	// create log file
 	filename := fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetLogFile())
 	return h.fileSystem.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 }

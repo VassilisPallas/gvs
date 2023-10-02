@@ -202,7 +202,6 @@ func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool)
 	return filteredVersions
 }
 
-// TODO: check if should return *Version
 func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, installer install.Installer, logger *logger.Log) Version {
 	return Version{
 		installer:   installer,

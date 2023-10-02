@@ -91,7 +91,6 @@ func (i Install) ExistingVersion(goVersionName string) error {
 	return i.createSymlink(goVersionName)
 }
 
-// TODO: check if should return *Install
 func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, logger *logger.Log) Install {
 	return Install{
 		fileHelpers: fileHelpers,

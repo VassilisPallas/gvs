@@ -21,10 +21,6 @@ var (
 	installLatest   = false
 	deleteUnused    = false
 	showAllVersions = false
-
-	filesUtils              = files.NewUtils()
-	fileHelpers             = files.New(filesUtils)
-	log         *logger.Log = logger.New(os.Stdout, nil)
 )
 
 func parseFlags() {
@@ -35,29 +31,24 @@ func parseFlags() {
 	flag.Parse()
 }
 
-func init() {
-	if err := fileHelpers.CreateInitFiles(); err != nil {
-		log.PrintError(err.Error())
-		os.Exit(1)
-		return
-	}
+func main() {
+	config := cf.GetConfig()
+	filesUtils := files.NewUtils()
+	fileHelpers := files.New(filesUtils)
+	log := logger.New(os.Stdout, nil)
 
-	logFile, err := fileHelpers.CreateLogFile()
-	log = logger.New(os.Stdout, logFile)
+	logFile, err := fileHelpers.CreateInitFiles()
+
 	if err != nil {
 		log.PrintError(err.Error())
 		os.Exit(1)
 		return
 	}
 
+	log = logger.New(os.Stdout, logFile)
+	defer log.Close() // close log file after the execution
+
 	parseFlags()
-}
-
-func main() {
-	// close log file after the execution
-	defer log.Close()
-
-	config := cf.GetConfig()
 
 	httpClient := &http.Client{
 		Timeout: time.Duration(config.REQUEST_TIMEOUT) * time.Second,
@@ -65,7 +56,6 @@ func main() {
 
 	clientAPI := api_client.New(httpClient, config.GO_BASE_URL)
 	installer := install.New(fileHelpers, clientAPI, log)
-
 	versioner := version.New(fileHelpers, clientAPI, installer, log)
 
 	versions, err := versioner.GetVersions(refreshVersions)

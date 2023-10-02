@@ -139,10 +139,6 @@ func (fh FakeFilesHelper) DeleteDirectory(dirName string) error {
 	return nil
 }
 
-func (fh FakeFilesHelper) CreateLogFile() (*os.File, error) {
+func (fh FakeFilesHelper) CreateInitFiles() (*os.File, error) {
 	return nil, nil
-}
-
-func (fh FakeFilesHelper) CreateInitFiles() error {
-	return nil
 }
