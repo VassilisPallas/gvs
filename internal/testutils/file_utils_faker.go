@@ -1,17 +1,11 @@
 package testutils
 
-import "os"
-
 type FakeFiler struct {
 	TarFile                 string
 	VersionDir              string
 	CurrentVersionFile      string
 	AppDir                  string
 	VersionResponseFileName string
-}
-
-func (FakeFiler) CreateInitFiles() error {
-	return nil
 }
 
 func (ff FakeFiler) GetAppDir() string {
@@ -42,6 +36,6 @@ func (FakeFiler) GetHomeDirectory() string {
 	return ""
 }
 
-func (FakeFiler) CreateLogFile() (*os.File, error) {
-	return nil, nil
+func (FakeFiler) GetLogFile() string {
+	return ""
 }

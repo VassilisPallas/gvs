@@ -22,8 +22,9 @@ var (
 	deleteUnused    = false
 	showAllVersions = false
 
-	filesUtils             = files.NewUtils()
-	log        *logger.Log = nil
+	filesUtils              = files.NewUtils()
+	fileHelpers             = files.New(filesUtils)
+	log         *logger.Log = nil
 )
 
 func parseFlags() {
@@ -35,13 +36,13 @@ func parseFlags() {
 }
 
 func init() {
-	if err := filesUtils.CreateInitFiles(); err != nil {
+	if err := fileHelpers.CreateInitFiles(); err != nil {
 		log.PrintError(err.Error())
 		os.Exit(1)
 		return
 	}
 
-	logFile, err := filesUtils.CreateLogFile()
+	logFile, err := fileHelpers.CreateLogFile()
 	log = logger.New(os.Stdout, logFile)
 	if err != nil {
 		log.PrintError(err.Error())
@@ -63,7 +64,6 @@ func main() {
 	}
 
 	clientAPI := api_client.New(httpClient, config.GO_BASE_URL)
-	fileHelpers := files.New(filesUtils)
 	installer := install.New(fileHelpers, clientAPI, log)
 
 	versioner := version.New(fileHelpers, clientAPI, installer, log)

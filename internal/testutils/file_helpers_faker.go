@@ -3,6 +3,7 @@ package testutils
 import (
 	"encoding/json"
 	"io"
+	"os"
 
 	"slices"
 
@@ -135,5 +136,13 @@ func (fh FakeFilesHelper) DeleteDirectory(dirName string) error {
 		return fh.DeleteDirectoryError
 	}
 
+	return nil
+}
+
+func (fh FakeFilesHelper) CreateLogFile() (*os.File, error) {
+	return nil, nil
+}
+
+func (fh FakeFilesHelper) CreateInitFiles() error {
 	return nil
 }

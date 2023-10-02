@@ -2,7 +2,6 @@ package files
 
 import (
 	"fmt"
-	"os"
 	"os/user"
 )
 
@@ -14,8 +13,7 @@ type FileUtils interface {
 	GetBinDir() string
 	GetCurrentVersionFile() string
 	GetVersionResponseFile() string
-	CreateInitFiles() error
-	CreateLogFile() (*os.File, error)
+	GetLogFile() string
 }
 
 type Files struct {
@@ -26,8 +24,6 @@ type Files struct {
 	binDir                 string
 	currentVersionFileName string
 	logFile                string
-
-	FileSystem FS
 
 	FileUtils
 }
@@ -65,25 +61,8 @@ func (f Files) GetVersionResponseFile() string {
 	return f.versionResponseFile
 }
 
-// TODO: add tests
-func (f Files) CreateInitFiles() error {
-	if err := f.FileSystem.MkdirIfNotExist(f.GetAppDir(), 0755); err != nil {
-		return err
-	}
-	if err := f.FileSystem.MkdirIfNotExist(f.GetVersionsDir(), 0755); err != nil {
-		return err
-	}
-	if err := f.FileSystem.MkdirIfNotExist(f.GetBinDir(), 0755); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// TODO: add tests
-func (f Files) CreateLogFile() (*os.File, error) {
-	filename := fmt.Sprintf("%s/%s", f.GetAppDir(), f.logFile)
-	return f.FileSystem.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+func (f Files) GetLogFile() string {
+	return f.logFile
 }
 
 func NewUtils() *Files {
@@ -95,6 +74,5 @@ func NewUtils() *Files {
 		binDir:                 "bin",
 		currentVersionFileName: "CURRENT",
 		logFile:                "gvs.log",
-		FileSystem:             FileSystem{},
 	}
 }
