@@ -16,17 +16,17 @@ type Installer interface {
 }
 
 type Install struct {
-	FileHelpers files.FileHelpers
-	ClientAPI   api_client.GoClientAPI
-	Log         *logger.Log
+	fileHelpers files.FileHelpers
+	clientAPI   api_client.GoClientAPI
+	log         *logger.Log
 
 	Installer
 }
 
 func (i Install) compareChecksums(checksum string) error {
-	hash, err := i.FileHelpers.GetTarChecksum()
+	hash, err := i.fileHelpers.GetTarChecksum()
 	if err != nil {
-		i.FileHelpers.RemoveTarFile()
+		i.fileHelpers.RemoveTarFile()
 		return err
 	}
 
@@ -38,11 +38,11 @@ func (i Install) compareChecksums(checksum string) error {
 }
 
 func (i Install) createSymlink(goVersionName string) error {
-	if err := i.FileHelpers.CreateExecutableSymlink(goVersionName); err != nil {
+	if err := i.fileHelpers.CreateExecutableSymlink(goVersionName); err != nil {
 		return err
 	}
 
-	if err := i.FileHelpers.UpdateRecentVersion(goVersionName); err != nil {
+	if err := i.fileHelpers.UpdateRecentVersion(goVersionName); err != nil {
 		return err
 	}
 
@@ -51,44 +51,48 @@ func (i Install) createSymlink(goVersionName string) error {
 
 func (i Install) newVersionHandler(checksum string, goVersionName string) func(content io.ReadCloser) error {
 	return func(content io.ReadCloser) error {
-		if err := i.FileHelpers.CreateTarFile(content); err != nil {
+		if err := i.fileHelpers.CreateTarFile(content); err != nil {
 			return err
 		}
 
-		i.Log.PrintMessage("Compare Checksums...\n")
+		i.log.PrintMessage("Compare Checksums...\n")
 		if err := i.compareChecksums(checksum); err != nil {
 			return err
 		}
 
-		i.Log.PrintMessage("Unzipping...\n")
-		if err := i.FileHelpers.UnzipTarFile(); err != nil {
+		i.log.PrintMessage("Unzipping...\n")
+		if err := i.fileHelpers.UnzipTarFile(); err != nil {
 			return err
 		}
 
-		if err := i.FileHelpers.RenameGoDirectory(goVersionName); err != nil {
+		if err := i.fileHelpers.RenameGoDirectory(goVersionName); err != nil {
 			return err
 		}
 
-		if err := i.FileHelpers.RemoveTarFile(); err != nil {
+		if err := i.fileHelpers.RemoveTarFile(); err != nil {
 			return err
 		}
 
-		i.Log.PrintMessage("Installing version...\n")
+		i.log.PrintMessage("Installing version...\n")
 		return i.createSymlink(goVersionName)
 	}
 }
 
 func (i Install) NewVersion(ctx context.Context, fileName string, checksum string, goVersionName string) error {
-	i.Log.PrintMessage("Downloading...\n")
-	return i.ClientAPI.DownloadVersion(ctx, fileName, i.newVersionHandler(checksum, goVersionName))
+	i.log.PrintMessage("Downloading...\n")
+	return i.clientAPI.DownloadVersion(ctx, fileName, i.newVersionHandler(checksum, goVersionName))
 }
 
 func (i Install) ExistingVersion(goVersionName string) error {
-	i.Log.PrintMessage("Installing version...\n")
+	i.log.PrintMessage("Installing version...\n")
 	return i.createSymlink(goVersionName)
 }
 
 // TODO: check if should return *Install
 func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, logger *logger.Log) Install {
-	return Install{FileHelpers: fileHelpers, ClientAPI: clientAPI, Log: logger}
+	return Install{
+		fileHelpers: fileHelpers,
+		clientAPI:   clientAPI,
+		log:         logger,
+	}
 }

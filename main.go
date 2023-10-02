@@ -24,7 +24,7 @@ var (
 
 	filesUtils              = files.NewUtils()
 	fileHelpers             = files.New(filesUtils)
-	log         *logger.Log = nil
+	log         *logger.Log = logger.New(os.Stdout, nil)
 )
 
 func parseFlags() {

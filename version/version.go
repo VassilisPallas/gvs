@@ -24,10 +24,10 @@ type Versioner interface {
 }
 
 type Version struct {
-	Installer   install.Installer
-	ClientAPI   api_client.GoClientAPI
-	FileHelpers files.FileHelpers
-	Log         *logger.Log
+	installer   install.Installer
+	clientAPI   api_client.GoClientAPI
+	fileHelpers files.FileHelpers
+	log         *logger.Log
 
 	Versioner
 }
@@ -91,8 +91,8 @@ func (v Version) FilterAlreadyDownloadedVersions(evs []*ExtendedVersion) []strin
 func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error) {
 	var responseVersions []api_client.VersionInfo
 
-	if !v.FileHelpers.AreVersionsCached() || forceFetchVersions {
-		err := v.ClientAPI.FetchVersions(context.TODO(), &responseVersions)
+	if !v.fileHelpers.AreVersionsCached() || forceFetchVersions {
+		err := v.clientAPI.FetchVersions(context.TODO(), &responseVersions)
 		if err != nil {
 			return nil, err
 		}
@@ -102,12 +102,12 @@ func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error
 			return nil, err
 		}
 
-		err = v.FileHelpers.StoreVersionsResponse(bytes)
+		err = v.fileHelpers.StoreVersionsResponse(bytes)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		err := v.FileHelpers.GetCachedResponse(&responseVersions)
+		err := v.fileHelpers.GetCachedResponse(&responseVersions)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +115,7 @@ func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error
 	versions := make([]*ExtendedVersion, 0, len(responseVersions))
 	for _, rv := range responseVersions {
 		version := &ExtendedVersion{VersionInfo: rv}
-		version.addExtras(v.FileHelpers)
+		version.addExtras(v.fileHelpers)
 
 		versions = append(versions, version)
 	}
@@ -125,7 +125,7 @@ func (v Version) GetVersions(forceFetchVersions bool) ([]*ExtendedVersion, error
 
 func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 	versions := v.FilterAlreadyDownloadedVersions(evs)
-	usedVersion := v.FileHelpers.GetRecentVersion()
+	usedVersion := v.fileHelpers.GetRecentVersion()
 
 	if usedVersion == "" {
 		return -1, &errors.NoInstalledVersionsError{}
@@ -134,12 +134,12 @@ func (v Version) DeleteUnusedVersions(evs []*ExtendedVersion) (int, error) {
 	count := 0
 	for _, version := range versions {
 		if version != usedVersion {
-			v.Log.PrintMessage("Deleting %s.\n", version)
-			if err := v.FileHelpers.DeleteDirectory(version); err != nil {
+			v.log.PrintMessage("Deleting %s.\n", version)
+			if err := v.fileHelpers.DeleteDirectory(version); err != nil {
 				return count, &errors.DeleteVersionError{Err: err, Version: version}
 			}
 
-			v.Log.PrintMessage("%s is deleted.\n", version)
+			v.log.PrintMessage("%s is deleted.\n", version)
 
 			count++
 		}
@@ -160,7 +160,7 @@ func (v Version) GetLatestVersion(evs []*ExtendedVersion) int {
 
 func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 	if ev.AlreadyInstalled {
-		err := v.Installer.ExistingVersion(ev.Version)
+		err := v.installer.ExistingVersion(ev.Version)
 		if err != nil {
 			return err
 		}
@@ -183,13 +183,13 @@ func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 			return &errors.ChecksumNotFoundError{OS: os, Arch: arch}
 		}
 
-		err := v.Installer.NewVersion(context.TODO(), fileName, checksum, ev.Version)
+		err := v.installer.NewVersion(context.TODO(), fileName, checksum, ev.Version)
 		if err != nil {
 			return err
 		}
 	}
 
-	v.Log.PrintMessage("%s version is installed!\n", ev.getCleanVersionName())
+	v.log.PrintMessage("%s version is installed!\n", ev.getCleanVersionName())
 
 	return nil
 }
@@ -207,9 +207,9 @@ func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool)
 // TODO: check if should return *Version
 func New(fileHelpers files.FileHelpers, clientAPI api_client.GoClientAPI, installer install.Installer, logger *logger.Log) Version {
 	return Version{
-		Installer:   installer,
-		ClientAPI:   clientAPI,
-		FileHelpers: fileHelpers,
-		Log:         logger,
+		installer:   installer,
+		clientAPI:   clientAPI,
+		fileHelpers: fileHelpers,
+		log:         logger,
 	}
 }

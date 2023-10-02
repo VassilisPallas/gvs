@@ -31,21 +31,21 @@ type FileHelpers interface {
 }
 
 type Helper struct {
-	FileUtils  FileUtils
-	Unzip      Unziper
-	FileSystem FS
+	fileUtils  FileUtils
+	unzip      Unziper
+	fileSystem FS
 
 	FileHelpers
 }
 
 func (h Helper) CreateTarFile(content io.ReadCloser) error {
-	file, err := h.FileSystem.Create(h.FileUtils.GetTarFile())
+	file, err := h.fileSystem.Create(h.fileUtils.GetTarFile())
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	_, err = h.FileSystem.Copy(file, content)
+	_, err = h.fileSystem.Copy(file, content)
 	if err != nil {
 		return err
 	}
@@ -55,15 +55,15 @@ func (h Helper) CreateTarFile(content io.ReadCloser) error {
 
 func (h Helper) GetTarChecksum() (string, error) {
 	hasher := sha256.New()
-	path := h.FileUtils.GetTarFile()
+	path := h.fileUtils.GetTarFile()
 
-	f, err := h.FileSystem.Open(path)
+	f, err := h.fileSystem.Open(path)
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 
-	if _, err := h.FileSystem.Copy(hasher, f); err != nil {
+	if _, err := h.fileSystem.Copy(hasher, f); err != nil {
 		return "", err
 	}
 
@@ -72,16 +72,16 @@ func (h Helper) GetTarChecksum() (string, error) {
 
 // TODO: add tests
 func (h Helper) UnzipTarFile() error {
-	source := h.FileUtils.GetTarFile()
-	destination := h.FileUtils.GetVersionsDir()
+	source := h.fileUtils.GetTarFile()
+	destination := h.fileUtils.GetVersionsDir()
 
-	return h.Unzip.UnzipSource(destination, source)
+	return h.unzip.UnzipSource(destination, source)
 }
 
 func (h Helper) RenameGoDirectory(goVersionName string) error {
-	target := fmt.Sprintf("%s/%s", h.FileUtils.GetVersionsDir(), "go")
+	target := fmt.Sprintf("%s/%s", h.fileUtils.GetVersionsDir(), "go")
 
-	if err := h.FileSystem.Rename(target, fmt.Sprintf("%s/%s", h.FileUtils.GetVersionsDir(), goVersionName)); err != nil {
+	if err := h.fileSystem.Rename(target, fmt.Sprintf("%s/%s", h.fileUtils.GetVersionsDir(), goVersionName)); err != nil {
 		return err
 	}
 
@@ -89,7 +89,7 @@ func (h Helper) RenameGoDirectory(goVersionName string) error {
 }
 
 func (h Helper) RemoveTarFile() error {
-	err := h.FileSystem.Remove(h.FileUtils.GetTarFile())
+	err := h.fileSystem.Remove(h.fileUtils.GetTarFile())
 	if err != nil {
 		return err
 	}
@@ -98,34 +98,34 @@ func (h Helper) RemoveTarFile() error {
 
 // TODO: add tests
 func (h Helper) CreateExecutableSymlink(goVersionName string) error {
-	destination := fmt.Sprintf("%s/%s/bin", h.FileUtils.GetVersionsDir(), goVersionName)
+	destination := fmt.Sprintf("%s/%s/bin", h.fileUtils.GetVersionsDir(), goVersionName)
 
-	files, err := h.FileSystem.ReadDir(destination)
+	files, err := h.fileSystem.ReadDir(destination)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, f := range files {
 		newFile := fmt.Sprintf("%s/%s", destination, f.Name())
-		link := fmt.Sprintf("%s/%s", h.FileUtils.GetBinDir(), f.Name())
+		link := fmt.Sprintf("%s/%s", h.fileUtils.GetBinDir(), f.Name())
 
-		if _, err := h.FileSystem.Lstat(link); err == nil {
-			h.FileSystem.Remove(link)
+		if _, err := h.fileSystem.Lstat(link); err == nil {
+			h.fileSystem.Remove(link)
 		}
 
-		if err := h.FileSystem.Symlink(newFile, link); err != nil {
+		if err := h.fileSystem.Symlink(newFile, link); err != nil {
 			return err
 		}
-		h.FileSystem.Chmod(link, 0700)
+		h.fileSystem.Chmod(link, 0700)
 	}
 
 	return nil
 }
 
 func (h Helper) UpdateRecentVersion(goVersionName string) error {
-	path := h.FileUtils.GetCurrentVersionFile()
+	path := h.fileUtils.GetCurrentVersionFile()
 
-	file, err := h.FileSystem.Create(path)
+	file, err := h.fileSystem.Create(path)
 	if err != nil {
 		return err
 	}
@@ -136,11 +136,11 @@ func (h Helper) UpdateRecentVersion(goVersionName string) error {
 }
 
 func (h Helper) StoreVersionsResponse(body []byte) error {
-	return h.FileSystem.WriteFile(fmt.Sprintf("%s/%s", h.FileUtils.GetAppDir(), h.FileUtils.GetVersionResponseFile()), body, 0644)
+	return h.fileSystem.WriteFile(fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetVersionResponseFile()), body, 0644)
 }
 
 func (h Helper) GetCachedResponse(v *[]api_client.VersionInfo) error {
-	byte_versions, err := h.FileSystem.ReadFile(fmt.Sprintf("%s/%s", h.FileUtils.GetAppDir(), h.FileUtils.GetVersionResponseFile()))
+	byte_versions, err := h.fileSystem.ReadFile(fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetVersionResponseFile()))
 	if err != nil {
 		return err
 	}
@@ -154,9 +154,9 @@ func (h Helper) GetCachedResponse(v *[]api_client.VersionInfo) error {
 
 // TODO: add tests
 func (h Helper) AreVersionsCached() bool {
-	file := fmt.Sprintf("%s/%s", h.FileUtils.GetAppDir(), h.FileUtils.GetVersionResponseFile())
+	file := fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetVersionResponseFile())
 
-	if info, err := h.FileSystem.Stat(file); err == nil {
+	if info, err := h.fileSystem.Stat(file); err == nil {
 		currentTime := time.Now()
 		// even if the versions are cached, we return false if the
 		// the date the response was stored is more than a week
@@ -167,9 +167,9 @@ func (h Helper) AreVersionsCached() bool {
 }
 
 func (h Helper) GetRecentVersion() string {
-	path := h.FileUtils.GetCurrentVersionFile()
+	path := h.fileUtils.GetCurrentVersionFile()
 
-	content, err := h.FileSystem.ReadFile(path)
+	content, err := h.fileSystem.ReadFile(path)
 	if err != nil {
 		// TODO: pass error as log to file
 		return ""
@@ -178,9 +178,9 @@ func (h Helper) GetRecentVersion() string {
 }
 
 func (h Helper) DirectoryExists(goVersion string) bool {
-	target := h.FileUtils.GetVersionsDir()
+	target := h.fileUtils.GetVersionsDir()
 
-	if _, err := h.FileSystem.Stat(fmt.Sprintf("%s/%s", target, goVersion)); !os.IsNotExist(err) {
+	if _, err := h.fileSystem.Stat(fmt.Sprintf("%s/%s", target, goVersion)); !os.IsNotExist(err) {
 		return true
 	}
 
@@ -188,8 +188,8 @@ func (h Helper) DirectoryExists(goVersion string) bool {
 }
 
 func (h Helper) DeleteDirectory(dirName string) error {
-	target := h.FileUtils.GetVersionsDir()
-	err := h.FileSystem.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
+	target := h.fileUtils.GetVersionsDir()
+	err := h.fileSystem.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
 	if err != nil {
 		return err
 	}
@@ -199,13 +199,13 @@ func (h Helper) DeleteDirectory(dirName string) error {
 
 // TODO: add tests
 func (h Helper) CreateInitFiles() error {
-	if err := h.FileSystem.MkdirIfNotExist(h.FileUtils.GetAppDir(), 0755); err != nil {
+	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetAppDir(), 0755); err != nil {
 		return err
 	}
-	if err := h.FileSystem.MkdirIfNotExist(h.FileUtils.GetVersionsDir(), 0755); err != nil {
+	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetVersionsDir(), 0755); err != nil {
 		return err
 	}
-	if err := h.FileSystem.MkdirIfNotExist(h.FileUtils.GetBinDir(), 0755); err != nil {
+	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetBinDir(), 0755); err != nil {
 		return err
 	}
 
@@ -214,16 +214,16 @@ func (h Helper) CreateInitFiles() error {
 
 // TODO: add tests
 func (h Helper) CreateLogFile() (*os.File, error) {
-	filename := fmt.Sprintf("%s/%s", h.FileUtils.GetAppDir(), h.FileUtils.GetLogFile())
-	return h.FileSystem.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	filename := fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetLogFile())
+	return h.fileSystem.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 }
 
 func New(fileUtils FileUtils) *Helper {
 	fs := FileSystem{}
 
 	return &Helper{
-		FileUtils:  fileUtils,
-		Unzip:      Unzip{fs: fs},
-		FileSystem: fs,
+		fileUtils:  fileUtils,
+		unzip:      Unzip{fs: fs},
+		fileSystem: fs,
 	}
 }
