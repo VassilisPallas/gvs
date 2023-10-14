@@ -1,5 +1,8 @@
 build:
-	go build -o gvs main.go
+	go build -o gvs cmd/gvs/main.go
+
+run:
+	go run cmd/gvs/main.go	
 
 vet:
 	go vet -tests=false ./...
