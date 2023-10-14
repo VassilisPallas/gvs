@@ -16,8 +16,11 @@ import (
 // And existing version is a version that has been downloaded in the past and therefore the contents
 // still exist on the local sysem.
 //
-// UnzipSource unzips the file path that defined as the source to the destination path.
-// UnzipSource must return a non-null error if the unzip fails.
+// NewVersion installs downloads and installs the selected version.
+// NewVersion must return a non-null error if the unzip fails.
+//
+// ExistingVersion installs again an already existing version as the current go version.
+// ExistingVersion must return a non-null error if the unzip fails.
 type Installer interface {
 	NewVersion(ctx context.Context, fileName string, checksum string, goVersionName string) error
 	ExistingVersion(goVersionName string) error
