@@ -1,3 +1,5 @@
+// Package files provides interfaces for reading
+// and writing files.
 package files
 
 import (
@@ -11,51 +13,29 @@ import (
 	"strings"
 )
 
+// Unziper is the interface that wraps the basic methods for unzipping files.
+//
+// UnzipSource unzips the file path that defined as the source to the destination path.
+// UnzipSource must return a non-null error if the unzip fails.
 // TODO: add tests
 type Unziper interface {
 	UnzipSource(dst string, src string) error
-	UnzipFile(tarReader *tar.Reader, header *tar.Header, dst string) error
 }
 
+// Unzip is the struct that implements the Unziper interface
+//
+// Unzip structs accepts the fs field, which is the wrapper for all the I/O and OS operations
+// regarding reading and writing files.
 type Unzip struct {
 	fs FS
 }
 
-func (u Unzip) UnzipSource(dst string, src string) error {
-	reader, err := u.fs.Open(src)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	uncompressedStream, err := gzip.NewReader(reader)
-	if err != nil {
-		return err
-	}
-
-	tarReader := tar.NewReader(uncompressedStream)
-
-	for {
-		header, err := tarReader.Next()
-
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		err = u.UnzipFile(tarReader, header, dst)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (u Unzip) UnzipFile(tarReader *tar.Reader, header *tar.Header, dst string) error {
+// unzipFile creates the given entry which can be either a directory or a file.
+//
+// For all the I/O and OS operation it is using the FS interface implementation.
+//
+// If the creation of the file or the directory fails, unzipFile returns back an not-null error.
+func (u Unzip) unzipFile(tarReader *tar.Reader, header *tar.Header, dst string) error {
 	path := filepath.Join(dst, header.Name)
 	info := header.FileInfo()
 
@@ -85,6 +65,51 @@ func (u Unzip) UnzipFile(tarReader *tar.Reader, header *tar.Header, dst string) 
 
 	if _, err := u.fs.Copy(file, tarReader); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// UnzipSource unzips the file path that defined as the source to the destination path.
+//
+// For all the I/O and OS operation it is using the FS interface implementation.
+// For getting the stream reader, first it is using the NewReader from the gzip library
+// and then the NewReader from the tar library, where the result of the first reader is passed
+// as an input to the second reader.
+//
+// It then iterates on each entry in the tar archive and calls the unzipFile from the same interface to
+// handle the file (or directory) creation.
+//
+// If any of the above operations fail, UnzipSource returns back an not-null error.
+func (u Unzip) UnzipSource(dst string, src string) error {
+	reader, err := u.fs.Open(src)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	uncompressedStream, err := gzip.NewReader(reader)
+	if err != nil {
+		return err
+	}
+
+	tarReader := tar.NewReader(uncompressedStream)
+
+	for {
+		header, err := tarReader.Next()
+
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return err
+		}
+
+		err = u.unzipFile(tarReader, header, dst)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

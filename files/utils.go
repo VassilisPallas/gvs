@@ -1,3 +1,5 @@
+// Package files provides interfaces for reading
+// and writing files.
 package files
 
 import (
@@ -5,6 +7,17 @@ import (
 	"os/user"
 )
 
+// FileUtils is the interface that wraps the basic methods for making requests.
+//
+// FetchVersions fetches and returns the available Go versions.
+// The versions should be parsed and stored in the value pointed to by v.
+// FetchVersions must return a non-null error if the request, or the parsing of the response fails.
+//
+// DownloadVersion downloads the content (most likely a tar.gz file) and then is passing
+// the response to the callack function.
+// DownloadVersion must close the response body reader after passing it in the callback function.
+// DownloadVersion must return an non-null error if the request failes or the callback returns
+// an non-null error.
 type FileUtils interface {
 	GetHomeDirectory() string
 	GetAppDir() string

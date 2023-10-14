@@ -17,3 +17,6 @@ test-expire-cache:
 	go clean -testcache
 
 test-no-cache: test-expire-cache test
+
+docs:
+	godoc -http=:6060

@@ -1,3 +1,5 @@
+// Package files provides interfaces for reading
+// and writing files.
 package files
 
 import (
