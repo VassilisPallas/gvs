@@ -6,13 +6,10 @@ import (
 	"io"
 	ioFS "io/fs"
 	"os"
+	"os/user"
 )
 
 // FS is the interface that wraps the basic methods for reading and writing files to the system.
-//
-// PrintMessage prints the given message to the cli. It is similar to Printf function from the fmt package,
-// which means it accepts a format specifier and the variables to be printed.
-// This method could also have the freedom to print the message to the logger.
 //
 // Chmod changes the mode of the named file to mode.
 //
@@ -47,6 +44,8 @@ import (
 // Remove removes the named file or (empty) directory.
 //
 // RemoveAll removes path and any children it contains.
+//
+// GetHomeDirectory return back the home directory for the current user.
 type FS interface {
 	Chmod(name string, mode ioFS.FileMode) error
 	Create(name string) (*os.File, error)
@@ -70,6 +69,8 @@ type FS interface {
 
 	Remove(name string) error
 	RemoveAll(path string) error
+
+	GetHomeDirectory() string
 }
 
 // FileSystem is the struct that implements the FS interface
@@ -203,4 +204,16 @@ func (FileSystem) Remove(name string) error {
 // It is a wrapper for the os.RemoveAll function.
 func (FileSystem) RemoveAll(path string) error {
 	return os.RemoveAll(path)
+}
+
+// GetHomeDirectory return back the home directory for the current user.
+//
+// If an error occurs, GetHomeDirectory will panic.
+func (FileSystem) GetHomeDirectory() string {
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+
+	return user.HomeDir
 }

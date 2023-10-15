@@ -12,6 +12,7 @@ import (
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/install"
 	"github.com/VassilisPallas/gvs/logger"
+	"github.com/VassilisPallas/gvs/pkg/unzip"
 	"github.com/VassilisPallas/gvs/version"
 	"github.com/manifoldco/promptui"
 )
@@ -35,8 +36,9 @@ func main() {
 	config := cf.GetConfig()
 	log := logger.New(os.Stdout, nil)
 
-	filesUtils := files.NewUtils()
-	fileHelpers := files.New(filesUtils)
+	fs := files.FileSystem{}
+	unzipper := unzip.Unzip{FileSystem: fs}
+	fileHelpers := files.New(fs, unzipper, log)
 
 	logFile, err := fileHelpers.CreateInitFiles()
 

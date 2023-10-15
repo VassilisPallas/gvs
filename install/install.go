@@ -4,6 +4,7 @@ package install
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/VassilisPallas/gvs/api_client"
@@ -27,14 +28,13 @@ type Installer interface {
 }
 
 // Install is the struct that implements the Installer interface
-//
-// Install structs accepts three fields, the fileHelpers that will be used to access and write files,
-// ,the clientAPI that will be used to download the selected version (if it's a new version), and the
-// log which is the logger.
 type Install struct {
+	// fileHelpers will be used to access and write files,
 	fileHelpers files.FileHelpers
-	clientAPI   api_client.GoClientAPI
-	log         *logger.Log
+	// clientAPI will be used to download the selected version (if it's a new version)
+	clientAPI api_client.GoClientAPI
+	// log is the custom Logger
+	log *logger.Log
 }
 
 // compareChecksums compares the SHA256 Checksum from the downloaded file with the checksum that was recieved from the API call
@@ -44,12 +44,6 @@ type Install struct {
 func (i Install) compareChecksums(checksum string) error {
 	hash, err := i.fileHelpers.GetTarChecksum()
 	if err != nil {
-		removeTarErr := i.fileHelpers.RemoveTarFile()
-		// TODO: send to logger instead
-		if removeTarErr != nil {
-			return removeTarErr
-		}
-
 		return err
 	}
 
@@ -84,26 +78,48 @@ func (i Install) createSymlink(goVersionName string) error {
 //
 // If any of the above operations fail, newVersionHandler will return an error.
 func (i Install) newVersionHandler(checksum string, goVersionName string) func(content io.ReadCloser) error {
-	return func(content io.ReadCloser) error {
-		if err := i.fileHelpers.CreateTarFile(content); err != nil {
+	return func(content io.ReadCloser) (err error) {
+		defer func() {
+			if err != nil {
+				err := i.fileHelpers.RemoveTarFile()
+				if err != nil {
+					i.log.Error(err.Error())
+				}
+
+				newVersionDirName, err := i.fileHelpers.GetLatestCreatedGoVersionDirectory()
+				if err != nil {
+					i.log.Error(err.Error())
+				}
+
+				if newVersionDirName != "" {
+					err := i.fileHelpers.DeleteDirectory(newVersionDirName)
+					if err != nil {
+						i.log.Error(err.Error())
+					}
+				}
+			}
+		}()
+
+		if err = i.fileHelpers.CreateTarFile(content); err != nil {
 			return err
 		}
 
 		i.log.PrintMessage("Compare Checksums...\n")
-		if err := i.compareChecksums(checksum); err != nil {
+		if err = i.compareChecksums(checksum); err != nil {
 			return err
 		}
 
 		i.log.PrintMessage("Unzipping...\n")
-		if err := i.fileHelpers.UnzipTarFile(); err != nil {
+		if err = i.fileHelpers.UnzipTarFile(); err != nil {
+			fmt.Println(err)
 			return err
 		}
 
-		if err := i.fileHelpers.RenameGoDirectory(goVersionName); err != nil {
+		if err = i.fileHelpers.RenameGoDirectory(goVersionName); err != nil {
 			return err
 		}
 
-		if err := i.fileHelpers.RemoveTarFile(); err != nil {
+		if err = i.fileHelpers.RemoveTarFile(); err != nil {
 			return err
 		}
 

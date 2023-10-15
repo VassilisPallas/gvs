@@ -20,7 +20,9 @@ func (err *NoInstalledVersionsError) Error() string {
 //
 // This error should be used when a version can't be deleted.
 type DeleteVersionError struct {
-	Err     error
+	// Err is the initial error that was raised.
+	Err error
+	// Version is the version that was the error was raised for.
 	Version string
 }
 
@@ -35,7 +37,9 @@ func (err *DeleteVersionError) Error() string {
 // This error should be used when an installer couln't be found.
 // Could be because of the OS type, the architecture type or even the kind of the file.
 type InstallerNotFoundError struct {
-	OS   string
+	// OS contain the user's Operating System (e.g. `darwin`, `linux`, `windows` etc).
+	OS string
+	// Arch contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
 	Arch string
 }
 
@@ -49,7 +53,9 @@ func (err *InstallerNotFoundError) Error() string {
 //
 // This error should be used when the SHA256 Checksum from API response is empty during downloading the file.
 type ChecksumNotFoundError struct {
-	OS   string
+	// OS contain the user's Operating System (e.g. `darwin`, `linux`, `windows` etc).
+	OS string
+	// Arch contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
 	Arch string
 }
 

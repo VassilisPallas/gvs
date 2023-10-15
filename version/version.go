@@ -158,7 +158,6 @@ func (v Version) GetLatestVersion(evs []*ExtendedVersion) int {
 
 func (v Version) Install(ev *ExtendedVersion, os string, arch string) error {
 	if ev.AlreadyInstalled {
-		// TODO: in case that fails, maybe re-download?
 		err := v.installer.ExistingVersion(ev.Version)
 		if err != nil {
 			return err

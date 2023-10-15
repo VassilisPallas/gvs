@@ -40,14 +40,13 @@ type Logger interface {
 }
 
 // Log is the struct that implements the Logger interface
-//
-// Go struct accepts three fields, the cliWriter which is the output destination for the cli messages,
-// the logWriter which is the output destination for the log messages, and the logger, which is a
-// *log.Logger instance.
 type Log struct {
+	// cliWriter is the output destination for the cli messages
 	cliWriter io.Writer
+	// logWriter is the output destination for the log messages
 	logWriter io.WriteCloser
-	logger    *log.Logger
+	// custom logger instance
+	logger *log.Logger
 }
 
 // addNewLine adds a new line to the precified format specifier

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/VassilisPallas/gvs/api_client"
+	"github.com/VassilisPallas/gvs/logger"
+	"github.com/VassilisPallas/gvs/pkg/unzip"
 )
 
 type FileHelpers interface {
@@ -29,16 +31,17 @@ type FileHelpers interface {
 	DirectoryExists(goVersion string) bool
 	DeleteDirectory(dirName string) error
 	CreateInitFiles() (*os.File, error)
+	GetLatestCreatedGoVersionDirectory() (string, error)
 }
 
 type Helper struct {
-	fileUtils  FileUtils
-	unzip      Unziper
 	fileSystem FS
+	unzip      unzip.Unzipper
+	log        *logger.Log
 }
 
 func (h Helper) CreateTarFile(content io.ReadCloser) error {
-	file, err := h.fileSystem.Create(h.fileUtils.GetTarFile())
+	file, err := h.fileSystem.Create(getTarFile(h.fileSystem))
 	if err != nil {
 		return err
 	}
@@ -54,7 +57,7 @@ func (h Helper) CreateTarFile(content io.ReadCloser) error {
 
 func (h Helper) GetTarChecksum() (string, error) {
 	hasher := sha256.New()
-	path := h.fileUtils.GetTarFile()
+	path := getTarFile(h.fileSystem)
 
 	f, err := h.fileSystem.Open(path)
 	if err != nil {
@@ -69,18 +72,22 @@ func (h Helper) GetTarChecksum() (string, error) {
 	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }
 
-// TODO: add tests
 func (h Helper) UnzipTarFile() error {
-	source := h.fileUtils.GetTarFile()
-	destination := h.fileUtils.GetVersionsDir()
+	source := getTarFile(h.fileSystem)
+	destination := getVersionsDir(h.fileSystem)
 
-	return h.unzip.UnzipSource(destination, source)
+	return h.unzip.ExtractTarSource(destination, source)
 }
 
 func (h Helper) RenameGoDirectory(goVersionName string) error {
-	target := fmt.Sprintf("%s/%s", h.fileUtils.GetVersionsDir(), "go")
+	versionDirName, err := h.GetLatestCreatedGoVersionDirectory()
+	if err != nil {
+		return err
+	}
 
-	if err := h.fileSystem.Rename(target, fmt.Sprintf("%s/%s", h.fileUtils.GetVersionsDir(), goVersionName)); err != nil {
+	target := fmt.Sprintf("%s/%s", getVersionsDir(h.fileSystem), versionDirName)
+
+	if err := h.fileSystem.Rename(target, fmt.Sprintf("%s/%s", getVersionsDir(h.fileSystem), goVersionName)); err != nil {
 		return err
 	}
 
@@ -88,16 +95,15 @@ func (h Helper) RenameGoDirectory(goVersionName string) error {
 }
 
 func (h Helper) RemoveTarFile() error {
-	err := h.fileSystem.Remove(h.fileUtils.GetTarFile())
-	if err != nil {
+	if err := h.fileSystem.Remove(getTarFile(h.fileSystem)); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-// TODO: add tests
 func (h Helper) CreateExecutableSymlink(goVersionName string) error {
-	destination := fmt.Sprintf("%s/%s/bin", h.fileUtils.GetVersionsDir(), goVersionName)
+	destination := fmt.Sprintf("%s/%s/bin", getVersionsDir(h.fileSystem), goVersionName)
 
 	files, err := h.fileSystem.ReadDir(destination)
 	if err != nil {
@@ -106,10 +112,10 @@ func (h Helper) CreateExecutableSymlink(goVersionName string) error {
 
 	for _, f := range files {
 		newFile := fmt.Sprintf("%s/%s", destination, f.Name())
-		link := fmt.Sprintf("%s/%s", h.fileUtils.GetBinDir(), f.Name())
+		link := fmt.Sprintf("%s/%s", getBinDir(h.fileSystem), f.Name())
 
+		// remove the symlink if exists already
 		if _, err := h.fileSystem.Lstat(link); err == nil {
-			// TODO: send to logger instead
 			err := h.fileSystem.Remove(link)
 			if err != nil {
 				return err
@@ -129,7 +135,7 @@ func (h Helper) CreateExecutableSymlink(goVersionName string) error {
 }
 
 func (h Helper) UpdateRecentVersion(goVersionName string) error {
-	path := h.fileUtils.GetCurrentVersionFile()
+	path := getCurrentVersionFile(h.fileSystem)
 
 	file, err := h.fileSystem.Create(path)
 	if err != nil {
@@ -137,16 +143,16 @@ func (h Helper) UpdateRecentVersion(goVersionName string) error {
 	}
 	defer file.Close()
 
-	_, err = io.WriteString(file, goVersionName)
+	_, err = h.fileSystem.WriteString(file, goVersionName)
 	return err
 }
 
 func (h Helper) StoreVersionsResponse(body []byte) error {
-	return h.fileSystem.WriteFile(fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetVersionResponseFile()), body, 0644)
+	return h.fileSystem.WriteFile(fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), versionResponseFile), body, 0644)
 }
 
 func (h Helper) GetCachedResponse(v *[]api_client.VersionInfo) error {
-	byte_versions, err := h.fileSystem.ReadFile(fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetVersionResponseFile()))
+	byte_versions, err := h.fileSystem.ReadFile(fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), versionResponseFile))
 	if err != nil {
 		return err
 	}
@@ -158,9 +164,8 @@ func (h Helper) GetCachedResponse(v *[]api_client.VersionInfo) error {
 	return nil
 }
 
-// TODO: add tests
 func (h Helper) AreVersionsCached() bool {
-	file := fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetVersionResponseFile())
+	file := fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), versionResponseFile)
 
 	if info, err := h.fileSystem.Stat(file); err == nil {
 		currentTime := time.Now()
@@ -173,18 +178,18 @@ func (h Helper) AreVersionsCached() bool {
 }
 
 func (h Helper) GetRecentVersion() string {
-	path := h.fileUtils.GetCurrentVersionFile()
+	path := getCurrentVersionFile(h.fileSystem)
 
 	content, err := h.fileSystem.ReadFile(path)
 	if err != nil {
-		// TODO: pass error as log to file
+		h.log.Error(err.Error())
 		return ""
 	}
 	return string(content)
 }
 
 func (h Helper) DirectoryExists(goVersion string) bool {
-	target := h.fileUtils.GetVersionsDir()
+	target := getVersionsDir(h.fileSystem)
 
 	if _, err := h.fileSystem.Stat(fmt.Sprintf("%s/%s", target, goVersion)); !os.IsNotExist(err) {
 		return true
@@ -194,7 +199,7 @@ func (h Helper) DirectoryExists(goVersion string) bool {
 }
 
 func (h Helper) DeleteDirectory(dirName string) error {
-	target := h.fileUtils.GetVersionsDir()
+	target := getVersionsDir(h.fileSystem)
 	err := h.fileSystem.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
 	if err != nil {
 		return err
@@ -203,29 +208,56 @@ func (h Helper) DeleteDirectory(dirName string) error {
 	return nil
 }
 
-// TODO: add tests
 func (h Helper) CreateInitFiles() (*os.File, error) {
-	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetAppDir(), 0755); err != nil {
+	if err := h.fileSystem.MkdirIfNotExist(getAppDir(h.fileSystem), 0755); err != nil {
 		return nil, err
 	}
-	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetVersionsDir(), 0755); err != nil {
+	if err := h.fileSystem.MkdirIfNotExist(getVersionsDir(h.fileSystem), 0755); err != nil {
 		return nil, err
 	}
-	if err := h.fileSystem.MkdirIfNotExist(h.fileUtils.GetBinDir(), 0755); err != nil {
+	if err := h.fileSystem.MkdirIfNotExist(getBinDir(h.fileSystem), 0755); err != nil {
 		return nil, err
 	}
 
 	// create log file
-	filename := fmt.Sprintf("%s/%s", h.fileUtils.GetAppDir(), h.fileUtils.GetLogFile())
+	filename := fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), logFile)
 	return h.fileSystem.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 }
 
-func New(fileUtils FileUtils) *Helper {
-	fs := FileSystem{}
+func (h Helper) GetLatestCreatedGoVersionDirectory() (string, error) {
+	dir := getVersionsDir(h.fileSystem)
+	files, err := h.fileSystem.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
 
+	var modTime time.Time
+
+	var dirName string
+	for _, file := range files {
+		if file.Type().IsDir() {
+			info, err := file.Info()
+			if err != nil {
+				return "", err
+			}
+			info.ModTime()
+
+			if !info.ModTime().Before(modTime) {
+				if info.ModTime().After(modTime) {
+					modTime = info.ModTime()
+				}
+				dirName = file.Name()
+			}
+		}
+	}
+
+	return dirName, nil
+}
+
+func New(fs FS, unzipper unzip.Unzipper, log *logger.Log) *Helper {
 	return &Helper{
-		fileUtils:  fileUtils,
-		unzip:      Unzip{fs: fs},
 		fileSystem: fs,
+		unzip:      unzipper,
+		log:        log,
 	}
 }

@@ -142,3 +142,7 @@ func (fh FakeFilesHelper) DeleteDirectory(dirName string) error {
 func (fh FakeFilesHelper) CreateInitFiles() (*os.File, error) {
 	return nil, nil
 }
+
+func (fh FakeFilesHelper) GetLatestCreatedGoVersionDirectory() (string, error) {
+	return "", nil
+}

@@ -9,10 +9,9 @@ import (
 // RequestError is a struct that implements the Error method,
 // so can "imitate" and error.
 //
-// RequestError struct accepts the StatusCode field, which can be used on the error message.
-//
 // This error should be used for failed requests.
 type RequestError struct {
+	// The status code returned from the failed request.
 	StatusCode int
 }
 

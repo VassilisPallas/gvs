@@ -35,47 +35,41 @@ type GoClientAPI interface {
 }
 
 // Go is the struct that implements the GoClientAPI interface
-//
-// Go structs accepts two fields, the client of type HTTPClient that will be used to make the
-// request and return the response, and the baseURL will be used from both FetchVersions and
-// DownloadVersion methods.
 type Go struct {
-	client  HTTPClient
+	// Client will be used as a custom HTTPClient to make the request and return the response.
+	client HTTPClient
+	// baseURL will be used from both FetchVersions and  DownloadVersion methods.
 	baseURL string
 }
 
 // VersionInfo is the struct that represents the response JSON for the versions.
-//
-// VersionInfo has the below fields.
-// The Versions that contains the Go version (e.g. `go1.21.3`)
-// The IsStable that is false is the Go version is not stable. Unstable versions are the release candidates (e.g. `go1.21rc4`).
-// The Files that is a slice that contains information for different kind of files that are available for the given version,
-// depending on the OS and Architecture type.
 type VersionInfo struct {
-	Version  string            `json:"version"`
-	IsStable bool              `json:"stable"`
-	Files    []FileInformation `json:"files"`
+	// Version contains the Go version (e.g. `go1.21.3`)
+	Version string `json:"version"`
+	// IsStable is boolean if the Go version is stable or not. Unstable versions are the release candidates (e.g. `go1.21rc4`).
+	IsStable bool `json:"stable"`
+	// Files is a slice that contains information for different kind of files that are available for the given version,
+	// depending on the OS and Architecture type.
+	Files []FileInformation `json:"files"`
 }
 
 // FileInformation is the struct that represents the JSON for the files inside the versions.
-//
-// FileInformation has the below fields.
-// The Filename that contains the name of the archived file. This is used as a parameter on the DownloadVersion method.
-// The OS that contains the type of the Operating System (e.g. `darwin`, `linux`, `windows` etc).
-// The Architecture that contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
-// The Version that contains the Go version (e.g. `go1.21.3`).
-// The Checksum that contains the SHA256 Checksum for the given file.
-// The Size that contains the given file in bytes.
-// The Kind that represents the kind of the file:
-// one of source, archive, or installer.
 type FileInformation struct {
-	Filename     string `json:"filename"`
-	OS           string `json:"os"`
+	// Filename contains the name of the archived file. This is used as a parameter on the DownloadVersion method.
+	Filename string `json:"filename"`
+	// OS contains the type of the Operating System (e.g. `darwin`, `linux`, `windows` etc).
+	OS string `json:"os"`
+	// Architecture contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
 	Architecture string `json:"arch"`
-	Version      string `json:"version"`
-	Checksum     string `json:"sha256"`
-	Size         uint64 `json:"size"`
-	Kind         string `json:"kind"`
+	// Version contains the Go version (e.g. `go1.21.3`).
+	Version string `json:"version"`
+	// Checksum contains the SHA256 Checksum for the given file.
+	Checksum string `json:"sha256"`
+	// Size contains the given file in bytes.
+	Size uint64 `json:"size"`
+	// The Kind represents the kind of the file:
+	// one of source, archive, or installer.
+	Kind string `json:"kind"`
 }
 
 // FetchVersions fetches and returns the available Go versions.
