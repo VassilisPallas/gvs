@@ -1,4 +1,4 @@
-<img style="text-allign:center" src="./logo.png" alt="drawing" width="100" height="80"/>
+<img style="text-allign:center" src="./logo.png" alt="drawing" width="120" height="100"/>
 
 # Golang Version Switcher
 
