@@ -2,10 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
+
+	terminalColors "github.com/fatih/color"
 
 	"github.com/VassilisPallas/gvs/api_client"
 	"github.com/VassilisPallas/gvs/clock"
@@ -25,11 +28,45 @@ var (
 	showAllVersions = false
 )
 
+func getBold() *terminalColors.Color {
+	return terminalColors.New().Add(terminalColors.Bold)
+}
+
 func parseFlags() {
-	flag.BoolVar(&refreshVersions, "refresh-versions", false, "Fetch again go versions in case the cached ones are stale")
-	flag.BoolVar(&installLatest, "latest", false, "Install latest stable version")
-	flag.BoolVar(&deleteUnused, "delete-unused", false, "Delete all unused versions")
-	flag.BoolVar(&showAllVersions, "all", false, "Show both stable and unstable versions")
+	flag.BoolVar(&showAllVersions, "show-all", false, "Show both stable and unstable versions.")
+	flag.BoolVar(&installLatest, "install-latest", false, "Install latest stable version.")
+	flag.BoolVar(&deleteUnused, "delete-unused", false, "Delete all unused versions that were installed before.")
+	flag.BoolVar(&refreshVersions, "refresh-versions", false, "Fetch again go versions in case the cached ones are stale.")
+
+	flag.Usage = func() {
+		bold := getBold()
+		gvsMessage := bold.Sprint("gvs")
+
+		flagSet := flag.CommandLine
+
+		fmt.Println()
+		bold.Println("NAME")
+		fmt.Printf("  gvs\n\n")
+
+		bold.Println("DESCRIPTION")
+		fmt.Printf("  the %s CLI is a POSIX-compliant bash script to manage multiple active Go versions.\n\n", gvsMessage)
+
+		bold.Println("SYNOPSIS")
+		fmt.Printf("  gvs\n   [--show-all]\n   [--install-latest]\n   [--delete-unused]\n   [--refresh-versions]\n\n")
+
+		bold.Println("FLAGS")
+		flags := []string{"show-all", "install-latest", "delete-unused", "refresh-versions"}
+		for _, name := range flags {
+			flag := flagSet.Lookup(name)
+			fmt.Printf("  --%s\n\t%s\n", flag.Name, flag.Usage)
+		}
+		fmt.Println()
+
+		fmt.Printf("Before start using the %s CLI, make sure to delete all the existing go versions\n", gvsMessage)
+		fmt.Printf("and append to your profile file the export: %q.\n", "export PATH=$HOME/bin:$PATH")
+		fmt.Printf("The profile file could be one of: (%s)\n", "~/.bash_profile, ~/.zshrc, ~/.profile, or ~/.bashrc")
+	}
+
 	flag.Parse()
 }
 
