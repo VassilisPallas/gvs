@@ -49,7 +49,7 @@ func parseFlags() {
 		fmt.Printf("  gvs\n\n")
 
 		bold.Println("DESCRIPTION")
-		fmt.Printf("  the %s CLI is a POSIX-compliant bash script to manage multiple active Go versions.\n\n", gvsMessage)
+		fmt.Printf("  the %s CLI is a command line tool to manage multiple active Go versions.\n\n", gvsMessage)
 
 		bold.Println("SYNOPSIS")
 		fmt.Printf("  gvs\n   [--show-all]\n   [--install-latest]\n   [--delete-unused]\n   [--refresh-versions]\n\n")
