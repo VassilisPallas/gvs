@@ -1,5 +1,5 @@
 // Package install provides an interface for installing
-// Go versions
+// Go versions.
 package install
 
 import (
@@ -28,10 +28,10 @@ type Installer interface {
 
 // Install is the struct that implements the Installer interface
 type Install struct {
-	// fileHelpers will be used to access and write files,
+	// fileHelpers is used to access and write files.
 	fileHelpers files.FileHelpers
 
-	// clientAPI will be used to download the selected version (if it's a new version)
+	// clientAPI is used to download the selected version (if it's a new version)
 	clientAPI api_client.GoClientAPI
 
 	// log is the custom Logger

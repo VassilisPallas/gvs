@@ -314,13 +314,10 @@ func (h Helper) DeleteDirectory(goVersion string) error {
 // CreateInitFiles creates the files that are required for the CLI.
 //
 // It is creating the below:
-// `$HOME/.gvs/` - The main directory for the CLI to store any data the CLI needs.
-//
-// `$HOME/.gvs/.go.versions/` - The directory where the downloaded versions are stored (as well as the CURRENT file).
-//
-// `$HOME/bin` - This is the directory when the symlinks are created for the selected version.
-//
-// `$HOME/.gvs/gvs.log` - This is where the logs are stored for debugging.
+//   - `$HOME/.gvs/` - The main directory for the CLI to store any data the CLI needs.
+//   - `$HOME/.gvs/.go.versions/` - The directory where the downloaded versions are stored (as well as the CURRENT file).
+//   - `$HOME/bin` - This is the directory when the symlinks are created for the selected version.
+//   - `$HOME/.gvs/gvs.log` - This is where the logs are stored for debugging.
 //
 // Once the gvs.log is created, the *os.File is returned back so it can be used from the logger.
 //

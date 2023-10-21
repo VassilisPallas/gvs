@@ -1,7 +1,7 @@
 // Package logger provides an interface to print logs
 // The implementation is both for cli messages to the user
 // as well as for an actual logger that can be used for
-// debugging purposes
+// debugging purposes.
 package logger
 
 import (

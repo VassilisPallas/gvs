@@ -1,5 +1,5 @@
 // Package clock provides an interface to for using
-// time and duration functions
+// time and duration functions.
 package clock
 
 import "time"

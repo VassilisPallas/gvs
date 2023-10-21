@@ -1,4 +1,4 @@
-// Package unzip provides functions for extracting
+// Package unzip provides an interface for extracting
 // tar and zip files.
 package unzip
 
