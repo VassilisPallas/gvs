@@ -75,7 +75,7 @@ type FileInformation struct {
 // FetchVersions fetches and returns the available Go versions.
 //
 // It is using the NewRequestWithContext function from the `http` package.
-// If the request is successful it will parses the JSON-encoded data and store it
+// If the request is successful it will parse the JSON-encoded data and store it
 // in the value pointed to by v.
 //
 // The ctx parameter is used for the request. It can be any type of context
