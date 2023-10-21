@@ -6,7 +6,6 @@ import (
 	"io"
 	ioFS "io/fs"
 	"os"
-	"os/user"
 )
 
 // FS is the interface that wraps the basic methods for reading and writing files to the system.
@@ -172,7 +171,7 @@ func (FileSystem) MkdirAll(path string, perm ioFS.FileMode) error {
 // It is using the Stat method from the FS interface to check if the directory exists already.
 // Then is using the MkdirAll method from the FS interface to create the directory, along with any necessary parents.
 //
-// It returns an error either when Stat fails or when the direcotry creation fails.
+// It returns an error either when Stat fails or when the directory creation fails.
 func (fs FileSystem) MkdirIfNotExist(path string, perm ioFS.FileMode) error {
 	_, err := fs.Stat(path)
 
@@ -210,10 +209,10 @@ func (FileSystem) RemoveAll(path string) error {
 //
 // If an error occurs, GetHomeDirectory will panic.
 func (FileSystem) GetHomeDirectory() string {
-	user, err := user.Current()
+	dirname, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
 
-	return user.HomeDir
+	return dirname
 }

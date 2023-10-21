@@ -35,3 +35,7 @@ func getCurrentVersionFile(fs FS) string {
 func getBinDir(fs FS) string {
 	return fmt.Sprintf("%s/%s", fs.GetHomeDirectory(), binDir)
 }
+
+func getVersionsResponseFile(fs FS) string {
+	return fmt.Sprintf("%s/%s", getAppDir(fs), versionResponseFile)
+}

@@ -37,8 +37,8 @@ type Install struct {
 	log *logger.Log
 }
 
-// compareChecksums compares the SHA256 Checksum from the downloaded file with the checksum that was recieved from the API call
-// that fetches all the versions and the infromation for each one of them.
+// compareChecksums compares the SHA256 Checksum from the downloaded file with the checksum that was received from the API call
+// that fetches all the versions and the information for each one of them.
 //
 // If there is a mismatch, compareChecksums will return an error.
 func (i Install) compareChecksums(checksum string) error {

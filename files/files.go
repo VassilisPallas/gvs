@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
 	"github.com/VassilisPallas/gvs/api_client"
+	"github.com/VassilisPallas/gvs/clock"
 	"github.com/VassilisPallas/gvs/logger"
 	"github.com/VassilisPallas/gvs/pkg/unzip"
 )
@@ -37,6 +37,7 @@ type FileHelpers interface {
 type Helper struct {
 	fileSystem FS
 	unzip      unzip.Unzipper
+	clock      clock.Clock
 	log        *logger.Log
 }
 
@@ -103,16 +104,16 @@ func (h Helper) RemoveTarFile() error {
 }
 
 func (h Helper) CreateExecutableSymlink(goVersionName string) error {
-	destination := fmt.Sprintf("%s/%s/bin", getVersionsDir(h.fileSystem), goVersionName)
+	versionBinDirectory := fmt.Sprintf("%s/%s/bin", getVersionsDir(h.fileSystem), goVersionName)
 
-	files, err := h.fileSystem.ReadDir(destination)
+	files, err := h.fileSystem.ReadDir(versionBinDirectory)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	for _, f := range files {
-		newFile := fmt.Sprintf("%s/%s", destination, f.Name())
-		link := fmt.Sprintf("%s/%s", getBinDir(h.fileSystem), f.Name())
+	for _, file := range files {
+		newFile := fmt.Sprintf("%s/%s", versionBinDirectory, file.Name())
+		link := fmt.Sprintf("%s/%s", getBinDir(h.fileSystem), file.Name())
 
 		// remove the symlink if exists already
 		if _, err := h.fileSystem.Lstat(link); err == nil {
@@ -148,11 +149,11 @@ func (h Helper) UpdateRecentVersion(goVersionName string) error {
 }
 
 func (h Helper) StoreVersionsResponse(body []byte) error {
-	return h.fileSystem.WriteFile(fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), versionResponseFile), body, 0644)
+	return h.fileSystem.WriteFile(getVersionsResponseFile(h.fileSystem), body, 0644)
 }
 
 func (h Helper) GetCachedResponse(v *[]api_client.VersionInfo) error {
-	byte_versions, err := h.fileSystem.ReadFile(fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), versionResponseFile))
+	byte_versions, err := h.fileSystem.ReadFile(getVersionsResponseFile(h.fileSystem))
 	if err != nil {
 		return err
 	}
@@ -165,13 +166,12 @@ func (h Helper) GetCachedResponse(v *[]api_client.VersionInfo) error {
 }
 
 func (h Helper) AreVersionsCached() bool {
-	file := fmt.Sprintf("%s/%s", getAppDir(h.fileSystem), versionResponseFile)
+	file := getVersionsResponseFile(h.fileSystem)
 
 	if info, err := h.fileSystem.Stat(file); err == nil {
-		currentTime := time.Now()
 		// even if the versions are cached, we return false if the
 		// the date the response was stored is more than a week
-		return currentTime.Sub(info.ModTime()).Hours() < 24*7
+		return h.clock.GetDiffInHoursFromNow(info.ModTime()) < 24*7
 	}
 
 	return false
@@ -191,21 +191,13 @@ func (h Helper) GetRecentVersion() string {
 func (h Helper) DirectoryExists(goVersion string) bool {
 	target := getVersionsDir(h.fileSystem)
 
-	if _, err := h.fileSystem.Stat(fmt.Sprintf("%s/%s", target, goVersion)); !os.IsNotExist(err) {
-		return true
-	}
-
-	return false
+	_, err := h.fileSystem.Stat(fmt.Sprintf("%s/%s", target, goVersion))
+	return err == nil
 }
 
 func (h Helper) DeleteDirectory(dirName string) error {
 	target := getVersionsDir(h.fileSystem)
-	err := h.fileSystem.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return h.fileSystem.RemoveAll(fmt.Sprintf("%s/%s", target, dirName))
 }
 
 func (h Helper) CreateInitFiles() (*os.File, error) {
@@ -235,15 +227,15 @@ func (h Helper) GetLatestCreatedGoVersionDirectory() (string, error) {
 
 	var dirName string
 	for _, file := range files {
-		if file.Type().IsDir() {
+		if file.IsDir() {
 			info, err := file.Info()
 			if err != nil {
 				return "", err
 			}
-			info.ModTime()
 
-			if !info.ModTime().Before(modTime) {
-				if info.ModTime().After(modTime) {
+			info.ModTime()
+			if !h.clock.IsBefore(info.ModTime(), modTime) {
+				if h.clock.IsAfter(info.ModTime(), modTime) {
 					modTime = info.ModTime()
 				}
 				dirName = file.Name()
@@ -254,9 +246,10 @@ func (h Helper) GetLatestCreatedGoVersionDirectory() (string, error) {
 	return dirName, nil
 }
 
-func New(fs FS, unzipper unzip.Unzipper, log *logger.Log) *Helper {
+func New(fs FS, clock clock.Clock, unzipper unzip.Unzipper, log *logger.Log) *Helper {
 	return &Helper{
 		fileSystem: fs,
+		clock:      clock,
 		unzip:      unzipper,
 		log:        log,
 	}

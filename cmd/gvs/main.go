@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/VassilisPallas/gvs/api_client"
+	"github.com/VassilisPallas/gvs/clock"
 	cf "github.com/VassilisPallas/gvs/config"
 	"github.com/VassilisPallas/gvs/files"
 	"github.com/VassilisPallas/gvs/install"
@@ -38,7 +39,8 @@ func main() {
 
 	fs := files.FileSystem{}
 	unzipper := unzip.Unzip{FileSystem: fs}
-	fileHelpers := files.New(fs, unzipper, log)
+	realClock := clock.RealClock{}
+	fileHelpers := files.New(fs, realClock, unzipper, log)
 
 	logFile, err := fileHelpers.CreateInitFiles()
 

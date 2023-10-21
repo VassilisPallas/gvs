@@ -1,22 +1,47 @@
+// Package clock provides an interface to for using
+// time and duration functions
 package clock
 
 import "time"
 
-type Clock struct {
+// Clock is the interface that wraps the basic methods for time and duration.
+//
+// Now returns a time.Time instance of the local time.
+//
+// GetDiffInHoursFromNow returns the difference in float64 between now and the given datetime
+// in hours.
+//
+// IsBefore returns whether the first date is before the second date.
+//
+// IsAfter returns whether the first date is after the second date.
+type Clock interface {
+	Now() time.Time
+	GetDiffInHoursFromNow(u time.Time) float64
+	IsBefore(u1 time.Time, u2 time.Time) bool
+	IsAfter(u1 time.Time, u2 time.Time) bool
 }
 
-func (Clock) Now() time.Time {
+// RealClock is the struct that implements the Clock interface
+type RealClock struct {
+}
+
+// Now returns a time.Time instance of the local time.
+func (RealClock) Now() time.Time {
 	return time.Now()
 }
 
-func (c Clock) GetDiffInHoursFromNow(u time.Time) float64 {
+// GetDiffInHoursFromNow returns the difference in float64 between now and the given datetime
+// in hours.
+func (c RealClock) GetDiffInHoursFromNow(u time.Time) float64 {
 	return c.Now().Sub(u).Hours()
 }
 
-func (Clock) IsBefore(t1 time.Time, t2 time.Time) bool {
-	return t1.Before(t2)
+// IsBefore returns whether the first date is before the second date.
+func (RealClock) IsBefore(u1 time.Time, u2 time.Time) bool {
+	return u1.Before(u2)
 }
 
-func (Clock) IsAfter(t1 time.Time, t2 time.Time) bool {
-	return t1.After(t2)
+// IsAfter returns whether the first date is after the second date.
+func (RealClock) IsAfter(u1 time.Time, u2 time.Time) bool {
+	return u1.After(u2)
 }

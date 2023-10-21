@@ -1,5 +1,5 @@
 // Package errors provides interfaces for custom errors
-// accross the application
+// across the application
 package errors
 
 import (
