@@ -11,6 +11,7 @@ import "fmt"
 type ChecksumMisMatchError struct {
 	// Checksum contains the SHA256 Checksum from API response.
 	Checksum string
+
 	// Hash contains the actual hash from the downloaded file.
 	Hash string
 }

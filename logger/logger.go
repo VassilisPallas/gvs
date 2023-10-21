@@ -13,29 +13,29 @@ import (
 
 // Logger is the interface that wraps the basic methods for printing messages to the user
 // and logging information.
-//
-// PrintMessage prints the given message to the cli. It is similar to Printf function from the fmt package,
-// which means it accepts a format specifier and the variables to be printed.
-// This method could also have the freedom to print the message to the logger.
-//
-// PrintError is similar function to PrintMessage, but it is used to differentiate when information and error
-// messages as different methods. This method could also have the freedom to print the error message to the logger.
-//
-// Info is the method that must be used for Info logger messages. It is similar to Printf function from the fmt package,
-// which means it accepts a format specifier and the variables to be printed.
-//
-// Error is the method that must be used for Error logger messages. It is similar to Printf function from the fmt package,
-// which means it accepts a format specifier and the variables to be printed.
-//
-// SetLogWriter specified the output destination for the logger.
-//
-// Close closed the logWriter instance that is passed to the method SetLogWriter (if any).
+
 type Logger interface {
+	// PrintMessage prints the given message to the cli. It is similar to Printf function from the fmt package,
+	// which means it accepts a format specifier and the variables to be printed.
+	// This method could also have the freedom to print the message to the logger.
 	PrintMessage(format string, a ...any)
+
+	// PrintError is similar function to PrintMessage, but it is used to differentiate when information and error
+	// messages as different methods. This method could also have the freedom to print the error message to the logger.
 	PrintError(format string, a ...any)
+
+	// Info is the method that must be used for Info logger messages. It is similar to Printf function from the fmt package,
+	// which means it accepts a format specifier and the variables to be printed.
 	Info(format string, a ...any)
+
+	// Error is the method that must be used for Error logger messages. It is similar to Printf function from the fmt package,
+	// which means it accepts a format specifier and the variables to be printed.
 	Error(format string, a ...any)
+
+	// SetLogWriter specified the output destination for the logger.
 	SetLogWriter(logWriter io.WriteCloser)
+
+	// Close closed the logWriter instance that is passed to the method SetLogWriter (if any).
 	Close()
 }
 
@@ -43,8 +43,10 @@ type Logger interface {
 type Log struct {
 	// cliWriter is the output destination for the cli messages
 	cliWriter io.Writer
+
 	// logWriter is the output destination for the log messages
 	logWriter io.WriteCloser
+
 	// custom logger instance
 	logger *log.Logger
 }

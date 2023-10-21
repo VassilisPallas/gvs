@@ -15,15 +15,14 @@ import (
 
 // Installer is the interface that wraps the basic methods for installing new or existing versions.
 // And existing version is a version that has been downloaded in the past and therefore the contents
-// still exist on the local sysem.
-//
-// NewVersion installs downloads and installs the selected version.
-// NewVersion must return a non-null error if the unzip fails.
-//
-// ExistingVersion installs again an already existing version as the current go version.
-// ExistingVersion must return a non-null error if the unzip fails.
+// still exist on the local system.
 type Installer interface {
+	// NewVersion installs downloads and installs the selected version.
+	// NewVersion must return a non-null error if the unzip fails.
 	NewVersion(ctx context.Context, fileName string, checksum string, goVersionName string) error
+
+	// ExistingVersion installs again an already existing version as the current go version.
+	// ExistingVersion must return a non-null error if the unzip fails.
 	ExistingVersion(goVersionName string) error
 }
 
@@ -31,8 +30,10 @@ type Installer interface {
 type Install struct {
 	// fileHelpers will be used to access and write files,
 	fileHelpers files.FileHelpers
+
 	// clientAPI will be used to download the selected version (if it's a new version)
 	clientAPI api_client.GoClientAPI
+
 	// log is the custom Logger
 	log *logger.Log
 }

@@ -22,6 +22,7 @@ func (err *NoInstalledVersionsError) Error() string {
 type DeleteVersionError struct {
 	// Err is the initial error that was raised.
 	Err error
+
 	// Version is the version that was the error was raised for.
 	Version string
 }
@@ -39,6 +40,7 @@ func (err *DeleteVersionError) Error() string {
 type InstallerNotFoundError struct {
 	// OS contain the user's Operating System (e.g. `darwin`, `linux`, `windows` etc).
 	OS string
+
 	// Arch contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
 	Arch string
 }
@@ -55,6 +57,7 @@ func (err *InstallerNotFoundError) Error() string {
 type ChecksumNotFoundError struct {
 	// OS contain the user's Operating System (e.g. `darwin`, `linux`, `windows` etc).
 	OS string
+
 	// Arch contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
 	Arch string
 }

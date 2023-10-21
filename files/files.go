@@ -18,20 +18,66 @@ import (
 
 // FileHelpers is the interface that wraps the basic methods for working with files.
 type FileHelpers interface {
+	// CreateTarFile creates the archive file based on the given io.ReadCloser content.
+	// CreateTarFile must return a non-null error if the creation of the file is successful.
 	CreateTarFile(content io.ReadCloser) error
+
+	// GetTarChecksum returns the checksum for the downloaded the archive file.
+	// GetTarChecksum must return the name of the tar file and a non-null error.
 	GetTarChecksum() (string, error)
+
+	// UnzipTarFile extracts the downloaded archive file.
+	// UnzipTarFile must return a non-null error if the operation is successful.
 	UnzipTarFile() error
+
+	// RenameGoDirectory renames the extracted directory to the version name.
+	// RenameGoDirectory must return a non-null error if the operation is successful.
 	RenameGoDirectory(goVersionName string) error
+
+	// RemoveTarFile removes the archive file.
+	// RemoveTarFile must return a non-null error if the deletion is successful.
 	RemoveTarFile() error
+
+	// CreateExecutableSymlink creates the symlinks for the binaries.
+	// CreateExecutableSymlink must return a non-null error if the symlinks are created.
 	CreateExecutableSymlink(goVersionName string) error
+
+	// UpdateRecentVersion updates the file where the currect (used) version is stored with the new installed version.
+	// UpdateRecentVersion must return a non-null error if the update is successful.
 	UpdateRecentVersion(goVersionName string) error
+
+	// StoreVersionsResponse stores the response from the fetch request.
+	// StoreVersionsResponse must return a non-null error if the operation is successful.
 	StoreVersionsResponse(body []byte) error
+
+	// GetCachedResponse returns the cached response from fetch request.
+	// The versions should be parsed and stored in the value pointed to by v.
+	// GetCachedResponse must return a non-null error if the operation is successful.
 	GetCachedResponse(v *[]api_client.VersionInfo) error
+
+	// AreVersionsCached returns if either the response from the fetch request is already cached or not.
 	AreVersionsCached() bool
+
+	// GetRecentVersion returns the current (used) Go version.
+	// GetRecentVersion should return an non empty string that contains the version name.
 	GetRecentVersion() string
+
+	// DirectoryExists checks if the given Go version directory exists or not.
 	DirectoryExists(goVersion string) bool
-	DeleteDirectory(dirName string) error
+
+	// DeleteDirectory deletes the given Go version directory.
+	// DeleteDirectory must return a non-null error if the deletion is successful.
+	DeleteDirectory(goVersion string) error
+
+	// CreateInitFiles creates the files that are required for the CLI.
+	// The *os.File can be used if any of the created files has to be returned back.
+	// CreateInitFiles must return a non-null error if the creation of the files is successful.
 	CreateInitFiles() (*os.File, error)
+
+	// GetLatestCreatedGoVersionDirectory returns the name of the latest modified directory.
+	// The path should be provided, but rather be static inside the method.
+	// GetLatestCreatedGoVersionDirectory must return the name of the latest modified directory and
+	// a non-null error if the operation is successful.
 	GetLatestCreatedGoVersionDirectory() (string, error)
 }
 
@@ -39,10 +85,13 @@ type FileHelpers interface {
 type Helper struct {
 	// fileSystem is the interface that is used as a wrapper for reading and writing files to the system.
 	fileSystem FS
+
 	// unzip is the interface that is used to unzip the downloaded version files
 	unzip unzip.Unzipper
+
 	// clock is the interface for time and duration.
 	clock clock.Clock
+
 	// log is the custom Logger
 	log *logger.Log
 }
@@ -170,7 +219,7 @@ func (h Helper) CreateExecutableSymlink(goVersionName string) error {
 	return nil
 }
 
-// UpdateRecentVersion updated the ~/.gvs/.go.versions/CURRENT file with the new installed version.
+// UpdateRecentVersion updates the ~/.gvs/.go.versions/CURRENT file with the new installed version.
 //
 // We store the new installed version in this file, so we know which is the current used version.
 //
@@ -232,7 +281,7 @@ func (h Helper) AreVersionsCached() bool {
 	return false
 }
 
-// GetRecentVersion returns the current (installed) Go version from ~/.gvs/.go.versions/CURRENT
+// GetRecentVersion returns the current (used) Go version from ~/.gvs/.go.versions/CURRENT
 //
 // If for any reason if fails, GetRecentVersion logs the error message and returns back an empty string.
 func (h Helper) GetRecentVersion() string {

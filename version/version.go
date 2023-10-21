@@ -19,7 +19,6 @@ type Versioner interface {
 	GetLatestVersion(evs []*ExtendedVersion) int
 	Install(ev *ExtendedVersion, os string, arch string) error
 	GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool) []*ExtendedVersion
-
 	FilterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string
 }
 

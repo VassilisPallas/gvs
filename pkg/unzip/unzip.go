@@ -14,14 +14,13 @@ import (
 )
 
 // Unzipper is the interface that wraps the basic methods for extracting files.
-//
-// ExtractTarSource extracts the file path that defined as the source (.tar.gz file) to the destination path.
-// ExtractTarSource must return a non-null *UnzipError if the extract fails.
-//
-// ExtractZipSource extracts the file path that defined as the source (.zip file) to the destination path.
-// ExtractZipSource must return a non-null *UnzipError if the extract fails.
 type Unzipper interface {
+	// ExtractTarSource extracts the file path that defined as the source (.tar.gz file) to the destination path.
+	// ExtractTarSource must return a non-null *UnzipError if the extract fails.
 	ExtractTarSource(dst string, src string) error
+
+	// ExtractZipSource extracts the file path that defined as the source (.zip file) to the destination path.
+	// ExtractZipSource must return a non-null *UnzipError if the extract fails.
 	ExtractZipSource(dst string, src string) error
 }
 

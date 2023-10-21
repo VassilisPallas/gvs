@@ -9,66 +9,49 @@ import (
 )
 
 // FS is the interface that wraps the basic methods for reading and writing files to the system.
-//
-// Chmod changes the mode of the named file to mode.
-//
-// Create creates or truncates the named file.
-//
-// Open opens the named file for reading.
-//
-// OpenFile opens the named file with specified flag.
-//
-// ReadDir reads the named directory, returning all its directory entries sorted by filename.
-//
-// ReadFile reads the named file and returns the contents.
-//
-// Stat returns a FileInfo describing the named file.
-//
-// Lstat returns a FileInfo describing the named file. If the file is a symbolic link, the returned FileInfo describes the symbolic link.
-//
-// Copy copies from src to dst until either EOF is reached on src or an error occurs. It returns the number of bytes copied and the first error encountered while copying, if any.
-//
-// Symlink creates newname as a symbolic link to oldname.
-//
-// WriteFile writes data to the named file, creating it if necessary.
-//
-// WriteString writes the contents of the string s to w, which accepts a slice of bytes.
-//
-// MkdirAll creates a directory named path, along with any necessary parents, and returns nil, or else returns an error.
-//
-// MkdirIfNotExist creates a directory named path if it does not exist, along with any necessary parents, and returns nil, or else returns an error.
-//
-// Rename renames (moves) oldpath to newpath.
-//
-// Remove removes the named file or (empty) directory.
-//
-// RemoveAll removes path and any children it contains.
-//
-// GetHomeDirectory return back the home directory for the current user.
 type FS interface {
+	// Chmod changes the mode of the named file to mode.
 	Chmod(name string, mode ioFS.FileMode) error
+	// Create creates or truncates the named file.
 	Create(name string) (*os.File, error)
 
+	// Open opens the named file for reading.
 	Open(name string) (*os.File, error)
+	// OpenFile opens the named file with specified flag.
 	OpenFile(name string, flag int, perm ioFS.FileMode) (*os.File, error)
+	// ReadDir reads the named directory, returning all its directory entries sorted by filename.
 	ReadDir(name string) ([]ioFS.DirEntry, error)
+	// ReadFile reads the named file and returns the contents.
 	ReadFile(name string) ([]byte, error)
+	// Stat returns a FileInfo describing the named file.
 	Stat(name string) (ioFS.FileInfo, error)
+	// Lstat returns a FileInfo describing the named file. If the file is a symbolic link, the returned FileInfo describes the symbolic link.
 	Lstat(name string) (ioFS.FileInfo, error)
 
+	// Copy copies from src to dst until either EOF is reached on src or an error occurs. It returns the number of bytes copied and the first error encountered while copying, if any.
 	Copy(dst io.Writer, src io.Reader) (written int64, err error)
+	// Symlink creates newname as a symbolic link to oldname.
 	Symlink(oldname string, newname string) error
+
+	// WriteFile writes data to the named file, creating it if necessary.
 	WriteFile(name string, data []byte, perm ioFS.FileMode) error
+	// WriteString writes the contents of the string s to w, which accepts a slice of bytes.
 	WriteString(w io.Writer, s string) (n int, err error)
 
+	// MkdirAll creates a directory named path, along with any necessary parents, and returns nil, or else returns an error.
 	MkdirAll(path string, perm ioFS.FileMode) error
+	// MkdirIfNotExist creates a directory named path if it does not exist, along with any necessary parents, and returns nil, or else returns an error.
 	MkdirIfNotExist(path string, perm ioFS.FileMode) error
 
+	// Rename renames (moves) oldpath to newpath.
 	Rename(oldpath string, newpath string) error
 
+	// Remove removes the named file or (empty) directory.
 	Remove(name string) error
+	// RemoveAll removes path and any children it contains.
 	RemoveAll(path string) error
 
+	// GetHomeDirectory return back the home directory for the current user.
 	GetHomeDirectory() string
 }
 

@@ -19,18 +19,17 @@ type HTTPClient interface {
 }
 
 // GoClientAPI is the interface that wraps the basic methods for making requests.
-//
-// FetchVersions fetches and returns the available Go versions.
-// The versions should be parsed and stored in the value pointed to by v.
-// FetchVersions must return a non-null error if the request, or the parsing of the response fails.
-//
-// DownloadVersion downloads the content (most likely a tar.gz file) and then is passing
-// the response to the callack function.
-// DownloadVersion must close the response body reader after passing it in the callback function.
-// DownloadVersion must return an non-null error if the request failes or the callback returns
-// an non-null error.
 type GoClientAPI interface {
+	// FetchVersions fetches and returns the available Go versions.
+	// The versions should be parsed and stored in the value pointed to by v.
+	// FetchVersions must return a non-null error if the request, or the parsing of the response fails.
 	FetchVersions(ctx context.Context, v *[]VersionInfo) error
+
+	// DownloadVersion downloads the content (most likely a tar.gz file) and then is passing
+	// the response to the callack function.
+	// DownloadVersion must close the response body reader after passing it in the callback function.
+	// DownloadVersion must return an non-null error if the request failes or the callback returns
+	// an non-null error.
 	DownloadVersion(ctx context.Context, filename string, cb func(body io.ReadCloser) error) error
 }
 
@@ -38,6 +37,7 @@ type GoClientAPI interface {
 type Go struct {
 	// Client will be used as a custom HTTPClient to make the request and return the response.
 	client HTTPClient
+
 	// baseURL will be used from both FetchVersions and  DownloadVersion methods.
 	baseURL string
 }
@@ -46,8 +46,10 @@ type Go struct {
 type VersionInfo struct {
 	// Version contains the Go version (e.g. `go1.21.3`)
 	Version string `json:"version"`
+
 	// IsStable is boolean if the Go version is stable or not. Unstable versions are the release candidates (e.g. `go1.21rc4`).
 	IsStable bool `json:"stable"`
+
 	// Files is a slice that contains information for different kind of files that are available for the given version,
 	// depending on the OS and Architecture type.
 	Files []FileInformation `json:"files"`
@@ -57,16 +59,22 @@ type VersionInfo struct {
 type FileInformation struct {
 	// Filename contains the name of the archived file. This is used as a parameter on the DownloadVersion method.
 	Filename string `json:"filename"`
+
 	// OS contains the type of the Operating System (e.g. `darwin`, `linux`, `windows` etc).
 	OS string `json:"os"`
+
 	// Architecture contains the architecture target (e.g. `386`, `amd64`, `arm64`, `s390x` etc).
 	Architecture string `json:"arch"`
+
 	// Version contains the Go version (e.g. `go1.21.3`).
 	Version string `json:"version"`
+
 	// Checksum contains the SHA256 Checksum for the given file.
 	Checksum string `json:"sha256"`
+
 	// Size contains the given file in bytes.
 	Size uint64 `json:"size"`
+
 	// The Kind represents the kind of the file:
 	// one of source, archive, or installer.
 	Kind string `json:"kind"`
