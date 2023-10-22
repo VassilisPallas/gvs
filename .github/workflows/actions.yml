@@ -1,0 +1,36 @@
+name: actions
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        run: make build
+
+      - name: Format
+        run: format
+
+      - name: Vet
+        run: make vet
+
+      - name: Linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54
+
+      - name: Test
+        run: make test
