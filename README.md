@@ -8,7 +8,7 @@
 - [About](#about)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Use the dropdown to select a version](#use-the-dropdown-to-select-a-version)
+    - [Use the dropdown to select a version](#use-the-dropdown-to-select-a-version)
     - [See all versions including release candidates (rc)](#see-all-versions-including-release-candidates-rc)
     - [Install latest version](#install-latest-version)
     - [Refresh version list](#refresh-version-list)
