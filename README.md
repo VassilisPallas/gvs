@@ -84,7 +84,7 @@ go version go1.21.2 darwin/arm64
 
 ### See all versions including release candidates (rc)
 
-To see a list with all versions, stables and unstable (release candidates), just use the `--show-all` flag.
+To see a list with all versions, stable and unstable (release candidates) ones, just use the `--show-all` flag.
 
 ```sh
 $ gvs --show-all
@@ -119,7 +119,7 @@ Every time you install a new versions, gvs keeps the previous installed versions
 In the below example, the versions `1.20` and `1.19` are previously installed, and since they are not used (neither of them is the current version you use), they will be deleted.
 
 ```sh
-$ gvs --install-latest
+$ gvs --delete-unused
 Deleting go1.20.
 go1.20 is deleted.
 Deleting go1.19.
