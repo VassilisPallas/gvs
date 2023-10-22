@@ -52,6 +52,10 @@ TBD
 
 ## Usage
 
+**Before start using gvs, read the below:**
+
+> gvs installs the `go` and `gofmt` binaries in `$HOME/bin/`. Make sure to append to your profile file: `export PATH=$PATH:$HOME/bin`, otherwise the terminal will not be able to find them.
+
 ### Use the dropdown to select a version
 
 ```sh
@@ -77,8 +81,6 @@ go version go1.21.2 darwin/arm64
 
 1. Select the version you want to be installed by using the up and down arrows.
 2. Hit **Enter** to select the desired version.
-
-> gvs installs the `go` and `gofmt` binaries in `$HOME/bin/`. Make sure to append to your profile file: `export PATH=$PATH:$HOME/bin`, otherwise the terminal will not be able to find them.
 
 ### See all versions including release candidates (rc)
 
