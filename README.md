@@ -13,6 +13,7 @@
     - [Install latest version](#install-latest-version)
     - [Refresh version list](#refresh-version-list)
     - [Help](#help)
+- [Licence](#licence)
 
 ## Intro
 
