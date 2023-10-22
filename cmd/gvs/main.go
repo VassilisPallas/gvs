@@ -63,7 +63,7 @@ func parseFlags() {
 		fmt.Println()
 
 		fmt.Printf("Before start using the %s CLI, make sure to delete all the existing go versions\n", gvsMessage)
-		fmt.Printf("and append to your profile file the export: %q.\n", "export PATH=$HOME/bin:$PATH")
+		fmt.Printf("and append to your profile file the export: %q.\n", "export PATH=$PATH:$HOME/bin")
 		fmt.Printf("The profile file could be one of: (%s)\n", "~/.bash_profile, ~/.zshrc, ~/.profile, or ~/.bashrc")
 	}
 
