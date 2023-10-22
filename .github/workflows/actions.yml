@@ -22,7 +22,7 @@ jobs:
         run: make build
 
       - name: Format
-        run: format
+        run: make format
 
       - name: Vet
         run: make vet
