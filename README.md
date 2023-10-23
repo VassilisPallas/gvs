@@ -14,6 +14,9 @@
 - [Intro](#intro)
 - [About](#about)
 - [Installation](#installation)
+    - [MacOS](#macos)
+    - [Linux](#linux)
+    - [Install from source](#install-from-source)
 - [Usage](#usage)
     - [Use the dropdown to select a version](#use-the-dropdown-to-select-a-version)
     - [See all versions including release candidates (rc)](#see-all-versions-including-release-candidates-rc)
@@ -58,7 +61,27 @@ gvs is a version manager for go, designed to be installed per-user, and invoked 
 
 ## Installation
 
-TBD
+`gvs` is available for MacOS and Linux based operating systems.
+
+### MacOS
+
+gvs is available via [brew](https://brew.sh/).
+
+```sh
+$ brew install VassilisPallas/tap/gvs
+```
+
+### Linux
+
+Installation for other linux operation systems.
+
+```sh
+$ curl -L https://raw.githubusercontent.com/VassilisPallas/gvs/main/install.sh | bash
+```
+
+### Install from source
+
+Alternatively, you can install the binary from [source](https://github.com/VassilisPallas/gvs/releases).
 
 ## Usage
 
