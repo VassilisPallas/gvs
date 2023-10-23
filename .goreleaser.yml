@@ -1,6 +1,5 @@
 builds:
-  -
-    ldflags:
+  - ldflags:
       - -s -w -X "main.version={{.Env.RELEASE_VERSION}}"
     main: cmd/gvs/main.go
     binary: gvs
@@ -28,8 +27,7 @@ changelog:
     - '^docs:'
     - '^test:'
 archives:
-  -
-    name_template: '{{ .ProjectName }}_{{.Env.RELEASE_VERSION}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - name_template: '{{ .ProjectName }}_{{.Env.RELEASE_VERSION}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     replacements:
       darwin: darwin
       linux: linux
@@ -39,8 +37,7 @@ archives:
     # - goos: windows
     #   format: zip
 brews:
-  -
-    name: gvs
+  - name: gvs
     alternative_names:
       - gvs@{{ .Version }}
       - gvs@{{ .Major }}
