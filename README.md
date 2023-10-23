@@ -13,6 +13,8 @@
     - [Install latest version](#install-latest-version)
     - [Refresh version list](#refresh-version-list)
     - [Help](#help)
+- [Contributions](#contributions)
+    - [Getting started with the project](#getting-started-with-the-project)
 - [Licence](#licence)
 
 ## Intro
@@ -152,6 +154,30 @@ Use the arrow keys to navigate: ↓ ↑ → ←
 ### Help
 
 For more help you can use the `--help` flag.
+
+## Contributions
+
+Contributions are very much welcomed! In order to contribute, the required version is `1.21.0`.
+For more information regarding contributions, feel free to read the [contributing.md](./.github/contributing.md) file.
+
+### Getting started with the project
+
+After cloning the repository on you local machine, you can run the below commands:
+
+```sh
+# install the dependencies
+make install-deps
+
+# run the tests
+make test
+
+# build the project
+make build
+```
+
+There a many Makefile recipes, feel free to run `make`. The default `make` command will print a short documentation for each recipe.
+
+> Recipes like `format`, `lint`, `vet` and `test` also run in Github Actions, but it should be nice to run them yourself as well before committing the changes. If you think this needs to be a git hook, I'll be more than happy to include it.
 
 ## Licence
 

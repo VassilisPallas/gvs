@@ -1,4 +1,4 @@
-# Contributing to Mongoose Fuzzy Searching
+# Contributing to GVS
 
 First off, thanks for taking the time to contribute!
 
@@ -18,7 +18,7 @@ First off, thanks for taking the time to contribute!
 
 - Use conventional commits
 
-  - Each commit should contain the type of the commit (bug, feat, chore, etc), the issue number and a short description of that patch. Eg. chore(ISS-30): Update something
+  - Each commit should contain the type of the commit (bug, feat, test, etc), the issue number and a short description of that patch. Eg. chore(ISS-30): Update something
 
 - PR title should contains the issue number with the title. Eg bug(ISS-30): Fix indices issue
 
