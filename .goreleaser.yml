@@ -36,10 +36,6 @@ archives:
 brews:
   -
     name: gvs@{{ .Major }}.{{ .Minor }}.{{ .Patch }}
-    tap:
-      owner: VassiliPallas
-      name: homebrew-gvs
-      branch: release
     commit_author:
       name: Vasileios Pallas
       email: vspallas@gmail.com
