@@ -13,7 +13,6 @@ jobs:
     release:
         runs-on: ubuntu-latest
         steps:
-            
             - uses: actions/checkout@v3
               with:
                 fetch-depth: 0
@@ -32,3 +31,4 @@ jobs:
                 args: release --clean
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GO_RELEASE_GITHUB_TOKEN: ${{ secrets.GO_RELEASE_GITHUB_TOKEN }}

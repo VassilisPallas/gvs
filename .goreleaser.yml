@@ -1,6 +1,5 @@
 builds:
-  -
-    ldflags:
+  - ldflags:
       - -s -w -X "main.version={{.Env.RELEASE_VERSION}}"
     main: cmd/gvs/main.go
     binary: gvs
@@ -34,8 +33,7 @@ archives:
     # - goos: windows
     #   format: zip
 brews:
-  -
-    name: gvs
+  - name: gvs
     commit_author:
       name: Vasileios Pallas
       email: vspallas@gmail.com
@@ -58,4 +56,4 @@ brews:
       owner: VassilisPallas
       name: homebrew-tap
       branch: main
-      token: "${{ secrets.GO_RELEASE_GITHUB_TOKEN }}"
+      token: "{{ .Env.GO_RELEASE_GITHUB_TOKEN }}"
