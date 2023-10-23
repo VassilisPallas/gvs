@@ -9,6 +9,8 @@
 </p>
 
 ## Table of Contents
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FVassilisPallas%2Fgvs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FVassilisPallas%2Fgvs?ref=badge_shield)
+
 
 - [Intro](#intro)
 - [About](#about)
@@ -188,3 +190,5 @@ There a many Makefile recipes, feel free to run `make`. The default `make` comma
 ## Licence
 
 See [LICENSE.md](./LICENSE.md)
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FVassilisPallas%2Fgvs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FVassilisPallas%2Fgvs?ref=badge_large)
