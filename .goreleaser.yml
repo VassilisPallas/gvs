@@ -30,20 +30,20 @@ changelog:
 archives:
   -
     name_template: '{{ .ProjectName }}_{{.Env.RELEASE_VERSION}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    replacements:
-      darwin: darwin
-      linux: linux
-      386: 386
-      amd64: amd64
+    # replacements:
+    #   darwin: darwin
+    #   linux: linux
+    #   386: 386
+    #   amd64: amd64
     # format_overrides:
     # - goos: windows
     #   format: zip
 brews:
   -
     name: gvs
-    alternative_names:
-      - gvs@{{ .Version }}
-      - gvs@{{ .Major }}
+    # alternative_names:
+    #   - gvs@{{ .Version }}
+    #   - gvs@{{ .Major }}
     commit_author:
       name: Vasileios Pallas
       email: vspallas@gmail.com
