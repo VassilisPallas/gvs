@@ -3,6 +3,7 @@
   <h2 align="center">Golang Version Switcher</h2>
   <p align="center">
     <a href="https://github.com/VassilisPallas/gvs/actions?workflow=build"><img alt="Github Actions status" src="https://github.com/VassilisPallas/gvs/actions/workflows/build.yml/badge.svg?branch=main&event=push"/></a>
+    <a href="https://goreportcard.com/report/github.com/VassilisPallas/gvs"><img alt="Go report" src="https://goreportcard.com/badge/github.com/VassilisPallas/gvs"/></a>
     <a hre="https://opensource.org/licenses/MIT"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-blue.svg"/></a>
     <a hre="https://app.fossa.com/projects/git%2Bgithub.com%2FVassilisPallas%2Fgvs?ref=badge_shield"><img alt="FOSSA status" src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FVassilisPallas%2Fgvs.svg?type=shield"/></a>
   </p>
