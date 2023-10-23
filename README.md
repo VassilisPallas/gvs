@@ -1,7 +1,15 @@
-<img style="text-allign:center" src="./logo.png" alt="drawing" width="120" height="100"/>
-
-# Golang Version Switcher
-![example workflow](https://github.com/VassilisPallas/gvs/actions/workflows/actions.yml/badge.svg?branch=main&event=push)
+<p align="center">
+  <img alt="GoReleaser Logo" src="./logo.png" height="140" />
+  <h2 align="center">Golang Version Switcher</h2>
+  <p align="center">
+    <a href="https://github.com/VassilisPallas/gvs/actions?workflow=build">
+      <img alt="Github Actions status" src="https://github.com/VassilisPallas/gvs/actions/workflows/actions.yml/badge.svg?branch=main&event=push"/>
+    </a>
+    <a href="https://github.com/VassilisPallas/gvs/releases/latest">
+      <img alt="GitHub release tags" src="https://img.shields.io/github/v/tag/VassilisPallas/gvs">
+    </a>
+  </p>
+</p>
 
 ## Table of Contents
 

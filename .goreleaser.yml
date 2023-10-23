@@ -1,0 +1,57 @@
+builds:
+  -
+    ldflags:
+      - -s -w -X "main.version={{.Env.RELEASE_VERSION}}"
+    main: cmd/gvs/main.go
+    binary: gvs
+    goos:
+      - darwin
+      - linux
+      # - windows
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+    # ignore:
+    #   - goos: windows
+    #     goarch: arm    
+checksum:
+  name_template: '{{ .ProjectName }}_{{.Env.RELEASE_VERSION}}_checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+archives:
+  -
+    name_template: '{{ .ProjectName }}_{{.Env.RELEASE_VERSION}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      darwin: darwin
+      linux: linux
+      386: 386
+      amd64: amd64
+    # format_overrides:
+    # - goos: windows
+    #   format: zip
+brews:
+  -
+    name: gvs
+    commit_author:
+      name: Vasileios Pallas
+      email: vspallas@gmail.com
+    folder: Formula
+    caveats: "Type 'gvs' on your command line and choose the Go version that you want from the dropdown. This command currently only works on macOS and Linux"
+    homepage: "https://github.com/VassilisPallas/gvs"
+    description: "A command line tool to manage multiple active Go versions."
+    conflicts:
+      - go
+    skip_upload: false
+    test: |
+      system "#{bin}/gvs --version"
+    install: |
+      bin.install "gvs"
