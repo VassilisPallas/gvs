@@ -30,24 +30,22 @@ changelog:
 archives:
   -
     name_template: '{{ .ProjectName }}_{{.Env.RELEASE_VERSION}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    # replacements:
-    #   darwin: darwin
-    #   linux: linux
-    #   386: 386
-    #   amd64: amd64
     # format_overrides:
     # - goos: windows
     #   format: zip
 brews:
   -
-    name: gvs
-    # alternative_names:
-    #   - gvs@{{ .Version }}
-    #   - gvs@{{ .Major }}
+    name: gvs@{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+    tap:
+      owner: VassiliPallas
+      name: homebrew-gvs
+      branch: release
     commit_author:
       name: Vasileios Pallas
       email: vspallas@gmail.com
+    url_template: https://github.com/VassilisPallas/gvs/releases/download/{{ .Tag }}/{{ .ArtifactName }}
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    download_strategy: CurlDownloadStrategy 
     folder: Formula
     caveats: "Type 'gvs' on your command line and choose the Go version that you want from the dropdown. This command currently only works on macOS and Linux"
     homepage: "https://github.com/VassilisPallas/gvs"
