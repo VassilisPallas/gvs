@@ -40,7 +40,7 @@ test-coverage: ## Returns the coverage for each package
 
 .PHONY: test-coverage-list
 test-coverage-list: ## Returns the extended coverage for each function and method per package
-	go test -v -coverpkg=./... -coverprofile=profile.cov $(TEST_PATH) && go tool cover -func profile.cov
+	go test -v -coverprofile=profile.cov $(TEST_PATH) && go tool cover -func profile.cov
 
 .PHONY: docs
 docs: ## Extracts and generates documentation for Go. Once the server started, you can visit http://localhost:6060/
