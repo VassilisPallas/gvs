@@ -11,7 +11,7 @@ install-deps: ## Installs the dependencies
 	go mod download && go get -v -t -d ./...
 
 .PHONY: run
-run: ## Runs the CLI
+run: ## Runs the CLI. You can also pass flags in run e.g. make run FLAGS="--install-latest"
 	go run cmd/gvs/main.go $(FLAGS)
 
 .PHONY: format
