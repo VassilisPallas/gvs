@@ -58,4 +58,4 @@ brews:
       owner: VassilisPallas
       name: homebrew-tap
       branch: main
-      token: "{{ secrets.GO_RELEASE_GITHUB_TOKEN }}"
+      token: "${{ secrets.GO_RELEASE_GITHUB_TOKEN }}"
