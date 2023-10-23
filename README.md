@@ -1,6 +1,7 @@
 <img style="text-allign:center" src="./logo.png" alt="drawing" width="120" height="100"/>
 
 # Golang Version Switcher
+![example workflow](https://github.com/VassilisPallas/gvs/actions/workflows/actions.yml/badge.svg?branch=main&event=push)
 
 ## Table of Contents
 
