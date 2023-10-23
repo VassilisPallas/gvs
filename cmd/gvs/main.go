@@ -129,6 +129,12 @@ func main() {
 		log.Info("installLatest option selected")
 
 		selectedIndex := versioner.GetLatestVersion(versions)
+		if selectedIndex == -1 {
+			log.PrintError("latest version not found")
+			os.Exit(1)
+			return
+		}
+
 		selectedVersion := versions[selectedIndex]
 
 		log.Info("selected %s version", selectedVersion.Version)
