@@ -63,6 +63,8 @@ gvs is a version manager for go, designed to be installed per-user, and invoked 
 
 `gvs` is available for MacOS and Linux based operating systems.
 
+> Make sure to delete any Go versions installed already before installing `gvs`.
+
 ### MacOS
 
 gvs is available via [brew](https://brew.sh/).
