@@ -182,7 +182,7 @@ Use the arrow keys to navigate: ↓ ↑ → ←
     1.21rc2 (unstable)
 ```
 
-:warning: You can combine the flags `--refresh-versions` and `-show-all` to refresh the list and see all the versions.
+:note: You can combine the flags `--refresh-versions` and `--show-all` to refresh the list and see all the versions.
 
 ### Help
 
@@ -210,7 +210,7 @@ make build
 
 There a many Makefile recipes, feel free to run `make`. The default `make` command will print a short documentation for each recipe.
 
-:warning: Recipes like `format`, `lint`, `vet` and `test` also run in Github Actions, but it should be nice to run them yourself as well before committing the changes. If you think this needs to be a git hook, I'll be more than happy to include it.
+:note: Recipes like `format`, `lint`, `vet` and `test` also run in Github Actions, but it should be nice to run them yourself as well before committing the changes. If you think this needs to be a git hook, I'll be more than happy to include it.
 
 ## Licence
 
