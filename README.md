@@ -153,7 +153,7 @@ Installing version...
 
 ### Delete unused versions
 
-Every time you install a new versions, gvs keeps the previous installed versions, so you can easily chnage between them. If you want to delete all the unused versions and keep only the current one, use the `--delete-unused` flag.
+Every time you install a new version, gvs keeps the previous installed versions, so you can easily change between them. If you want to delete all the unused versions and keep only the current one, use the `--delete-unused` flag.
 
 In the below example, the versions `1.20` and `1.19` are previously installed, and since they are not used (neither of them is the current version you use), they will be deleted.
 
