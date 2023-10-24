@@ -57,7 +57,8 @@ go version go1.21.3 darwin/arm64
 
 gvs is a version manager for go, designed to be installed per-user, and invoked per-shell. gvs works on any POSIX-compliant shell (sh, dash, ksh, zsh, bash), in particular on these platforms: unix and macOS.
 
-:warning: Windows will be supported in a later version.
+> [!WARNING]  
+> Critical content demanding immediate user attention due to potential risks.
 
 
 ## Installation
