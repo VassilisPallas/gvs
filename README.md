@@ -57,13 +57,14 @@ go version go1.21.3 darwin/arm64
 
 gvs is a version manager for go, designed to be installed per-user, and invoked per-shell. gvs works on any POSIX-compliant shell (sh, dash, ksh, zsh, bash), in particular on these platforms: unix and macOS.
 
-> Windows will be supported in a later version.
+:warning: Windows will be supported in a later version.
+
 
 ## Installation
 
 `gvs` is available for MacOS and Linux based operating systems.
 
-> Make sure to delete any Go versions installed already before installing `gvs`.
+:warning: Make sure to delete any Go versions installed already before installing `gvs`.
 
 ### MacOS
 
@@ -89,7 +90,7 @@ Alternatively, you can install the binary from [source](https://github.com/Vassi
 
 **Before start using gvs, read the below:**
 
-> gvs installs the `go` and `gofmt` binaries in `$HOME/bin/`. Make sure to append to your profile file: `export PATH=$PATH:$HOME/bin`, otherwise the terminal will not be able to find them.
+:warning: gvs installs the `go` and `gofmt` binaries in `$HOME/bin/`. Make sure to append to your profile file: `export PATH=$PATH:$HOME/bin`, otherwise the terminal will not be able to find them.
 
 ### Use the dropdown to select a version
 
@@ -181,7 +182,7 @@ Use the arrow keys to navigate: ↓ ↑ → ←
     1.21rc2 (unstable)
 ```
 
-> You can combine the flags `--refresh-versions` and `-show-all` to refresh the list and see all the versions.
+:warning: You can combine the flags `--refresh-versions` and `-show-all` to refresh the list and see all the versions.
 
 ### Help
 
@@ -209,7 +210,7 @@ make build
 
 There a many Makefile recipes, feel free to run `make`. The default `make` command will print a short documentation for each recipe.
 
-> Recipes like `format`, `lint`, `vet` and `test` also run in Github Actions, but it should be nice to run them yourself as well before committing the changes. If you think this needs to be a git hook, I'll be more than happy to include it.
+:warning: Recipes like `format`, `lint`, `vet` and `test` also run in Github Actions, but it should be nice to run them yourself as well before committing the changes. If you think this needs to be a git hook, I'll be more than happy to include it.
 
 ## Licence
 
