@@ -146,3 +146,7 @@ func (fh FakeFilesHelper) CreateInitFiles() (*os.File, error) {
 func (fh FakeFilesHelper) GetLatestCreatedGoVersionDirectory() (string, error) {
 	return "", nil
 }
+
+func (fh FakeFilesHelper) ReadVersionFromMod() (string, error) {
+	return "", nil
+}

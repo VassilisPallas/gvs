@@ -14,6 +14,7 @@ import (
 	"github.com/VassilisPallas/gvs/clock"
 	"github.com/VassilisPallas/gvs/logger"
 	"github.com/VassilisPallas/gvs/pkg/unzip"
+	"golang.org/x/mod/modfile"
 )
 
 // FileHelpers is the interface that wraps the basic methods for working with files.
@@ -79,6 +80,8 @@ type FileHelpers interface {
 	// GetLatestCreatedGoVersionDirectory must return the name of the latest modified directory and
 	// a non-null error if the operation is successful.
 	GetLatestCreatedGoVersionDirectory() (string, error)
+
+	ReadVersionFromMod() (string, error)
 }
 
 // Helper is the struct that implements the FileHelpers interface
@@ -369,6 +372,20 @@ func (h Helper) GetLatestCreatedGoVersionDirectory() (string, error) {
 	}
 
 	return dirName, nil
+}
+
+func (h Helper) ReadVersionFromMod() (string, error) {
+	buf, err := h.fileSystem.ReadFile("./go.mod")
+	if err != nil {
+		return "", err
+	}
+
+	f, err := modfile.Parse("go.mod", buf, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return f.Go.Version, nil
 }
 
 // New returns a *Helper instance that implements the FileHelpers interface.

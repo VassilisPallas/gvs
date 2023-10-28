@@ -3,10 +3,10 @@ package main
 import (
 	"net/http"
 	"os"
-	"runtime"
 	"time"
 
 	"github.com/VassilisPallas/gvs/api_client"
+	"github.com/VassilisPallas/gvs/cli"
 	"github.com/VassilisPallas/gvs/clock"
 	cf "github.com/VassilisPallas/gvs/config"
 	"github.com/VassilisPallas/gvs/files"
@@ -16,7 +16,6 @@ import (
 	"github.com/VassilisPallas/gvs/pkg/unzip"
 	"github.com/VassilisPallas/gvs/version"
 	"github.com/manifoldco/promptui"
-	"golang.org/x/mod/modfile"
 )
 
 var (
@@ -30,12 +29,12 @@ var (
 
 func parseFlags() {
 	set := flags.FlagSet{}
-	set.FlagBool(&showAllVersions, "show-all", false, "Show both stable and unstable versions.")
-	set.FlagBool(&installLatest, "install-latest", false, "Install latest stable version.")
-	set.FlagBool(&deleteUnused, "delete-unused", false, "Delete all unused versions that were installed before.")
-	set.FlagBool(&refreshVersions, "refresh-versions", false, "Fetch again go versions in case the cached ones are stale.")
-	set.FlagStr(&specificVersion, "install-version", "", "Pass the version you want to install instead of selecting from the dropdown. If you do not specify the minor or the patch version, the latest one will be selected.")
-	set.FlagBool(&fromModFile, "from-mod", false, "Install the version that will be found on the go.mod file. The go.mod file should be on the same path you run gvs. If the version in the go.mod file do not specify the minor or the patch version, the latest one will be selected.")
+	set.FlagBool(&showAllVersions, "show-all", 'a', false, "Show both stable and unstable versions.")
+	set.FlagBool(&installLatest, "install-latest", 'l', false, "Install latest stable version.")
+	set.FlagBool(&deleteUnused, "delete-unused", 'd', false, "Delete all unused versions that were installed before.")
+	set.FlagBool(&refreshVersions, "refresh-versions", 'r', false, "Fetch again go versions in case the cached ones are stale.")
+	set.FlagStr(&specificVersion, "install-version", 'v', "", "Pass the version you want to install instead of selecting from the dropdown. If you do not specify the minor or the patch version, the latest one will be selected.")
+	set.FlagBool(&fromModFile, "from-mod", 'm', false, "Install the version that will be found on the go.mod file. The go.mod file should be on the same path you run gvs. If the version in the go.mod file do not specify the minor or the patch version, the latest one will be selected.")
 
 	set.Parse()
 }
@@ -79,40 +78,20 @@ func main() {
 		return
 	}
 
+	cli := cli.New(versions, versioner, log)
+
 	switch {
 	case fromModFile:
 		log.Info("install version from go.mod file option selected")
 
-		buf, err := fs.ReadFile("./go.mod")
+		version, err := fileHelpers.ReadVersionFromMod()
 		if err != nil {
 			log.PrintError(err.Error())
 			os.Exit(1)
 			return
 		}
 
-		f, err := modfile.Parse("go.mod", buf, nil)
-		if err != nil {
-			log.PrintError(err.Error())
-			os.Exit(1)
-			return
-		}
-
-		semver := &version.Semver{}
-		err = version.ParseSemver(f.Go.Version, semver)
-		if err != nil {
-			log.PrintError(err.Error())
-			os.Exit(1)
-			return
-		}
-
-		selectedVersion := versioner.FindVersionBasedOnSemverName(versions, semver)
-		if selectedVersion == nil {
-			log.PrintError("%s is not a valid version.", semver.GetVersion())
-			os.Exit(1)
-			return
-		}
-
-		err = versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
+		err = cli.InstallVersion(version)
 		if err != nil {
 			log.PrintError(err.Error())
 			os.Exit(1)
@@ -121,56 +100,16 @@ func main() {
 	case specificVersion != "":
 		log.Info("install specific version option selected")
 
-		semver := &version.Semver{}
-		err := version.ParseSemver(specificVersion, semver)
+		err := cli.InstallVersion(specificVersion)
 		if err != nil {
 			log.PrintError(err.Error())
 			os.Exit(1)
 			return
-		}
-
-		selectedVersion := versioner.FindVersionBasedOnSemverName(versions, semver)
-		if selectedVersion == nil {
-			log.PrintError("%s is not a valid version.", semver.GetVersion())
-			os.Exit(1)
-			return
-		}
-
-		err = versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
-		if err != nil {
-			log.PrintError(err.Error())
-			os.Exit(1)
-			return
-		}
-	case deleteUnused:
-		log.Info("deleteUnused option selected")
-
-		deleted_count, err := versioner.DeleteUnusedVersions(versions)
-		if err != nil {
-			log.PrintError(err.Error())
-			os.Exit(1)
-			return
-		}
-
-		if deleted_count > 0 {
-			log.PrintMessage("All the unused version are deleted!")
-		} else {
-			log.PrintMessage("Nothing to delete")
 		}
 	case installLatest:
 		log.Info("install latest option selected")
 
-		selectedIndex := versioner.GetLatestVersion(versions)
-		if selectedIndex == -1 {
-			log.PrintError("latest version not found")
-			os.Exit(1)
-			return
-		}
-
-		selectedVersion := versions[selectedIndex]
-
-		log.Info("selected %s version", selectedVersion.Version)
-		err := versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
+		err := cli.InstallLatestVersion()
 		if err != nil {
 			log.PrintError(err.Error())
 			os.Exit(1)
@@ -200,10 +139,20 @@ func main() {
 			return
 		}
 
-		selectedVersion := promptVersions[selectedIndex]
+		err = cli.Install(promptVersions[selectedIndex])
+		if err != nil {
+			log.PrintError(err.Error())
+			os.Exit(1)
+			return
+		}
+	}
 
-		log.Info("selected %s version\n", selectedVersion.Version)
-		err := versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
+	// execute this command at the end, after any other selected flag
+	// to delete the unused version if needed.
+	if deleteUnused {
+		log.Info("deleteUnused option selected")
+
+		err := cli.DeleteUnusedVersions()
 		if err != nil {
 			log.PrintError(err.Error())
 			os.Exit(1)
