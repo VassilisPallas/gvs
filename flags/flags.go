@@ -75,7 +75,6 @@ func (s *FlagSet) printFlags() {
 		flagInfo := flagSet.Lookup(flag.name)
 		fmt.Printf("  %s\n\t%s\n", flag.getHelpName(), flagInfo.Usage)
 	}
-
 }
 
 // Parse is preparing the help command and parses the flags.
