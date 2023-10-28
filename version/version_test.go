@@ -1146,3 +1146,111 @@ func TestExtendedVersionGetPromptNameShowStable(t *testing.T) {
 		})
 	}
 }
+
+func TestFindVersionBasedOnSemverName(t *testing.T) {
+	versions := []*version.ExtendedVersion{
+		{
+			UsedVersion:      false,
+			AlreadyInstalled: true,
+			VersionInfo: api_client.VersionInfo{
+				Version:  "go1.21.3",
+				IsStable: true,
+				Files:    []api_client.FileInformation{},
+			},
+		},
+		{
+			UsedVersion:      false,
+			AlreadyInstalled: true,
+			VersionInfo: api_client.VersionInfo{
+				Version:  "go1.21.0",
+				IsStable: true,
+				Files:    []api_client.FileInformation{},
+			},
+		},
+		{
+			UsedVersion:      true,
+			AlreadyInstalled: true,
+			VersionInfo: api_client.VersionInfo{
+				Version:  "go1.20.8",
+				IsStable: true,
+				Files:    []api_client.FileInformation{},
+			},
+		},
+		{
+			UsedVersion:      false,
+			AlreadyInstalled: true,
+			VersionInfo: api_client.VersionInfo{
+				Version:  "go1.20.7",
+				IsStable: true,
+				Files:    []api_client.FileInformation{},
+			},
+		},
+		{
+			UsedVersion:      false,
+			AlreadyInstalled: false,
+			VersionInfo: api_client.VersionInfo{
+				Version:  "go1.20.6",
+				IsStable: true,
+				Files:    []api_client.FileInformation{},
+			},
+		},
+		{
+			UsedVersion:      false,
+			AlreadyInstalled: false,
+			VersionInfo: api_client.VersionInfo{
+				Version:  "go1.20rc2",
+				IsStable: true,
+				Files:    []api_client.FileInformation{},
+			},
+		},
+	}
+
+	testCases := []struct {
+		testTitle         string
+		semver            version.Semver
+		expecectedVersion *version.ExtendedVersion
+	}{
+		{
+			testTitle:         "should return the correct version when semver contains only the major version",
+			semver:            version.Semver{Major: intToUnsigned(1)},
+			expecectedVersion: versions[0],
+		},
+		{
+			testTitle:         "should return the correct version when semver contains the major and the minor version",
+			semver:            version.Semver{Major: intToUnsigned(1), Minor: intToUnsigned(20)},
+			expecectedVersion: versions[2],
+		},
+		{
+			testTitle:         "should return the correct version when semver contains the major, the minor and the patch version",
+			semver:            version.Semver{Major: intToUnsigned(1), Minor: intToUnsigned(20), Patch: intToUnsigned(6)},
+			expecectedVersion: versions[4],
+		},
+		{
+			testTitle:         "should return the correct version when semver contains the major, the minor and the rc version",
+			semver:            version.Semver{Major: intToUnsigned(1), Minor: intToUnsigned(20), ReleaseCandidate: intToUnsigned(2)},
+			expecectedVersion: versions[5],
+		},
+		{
+			testTitle:         "should return the nil when the version is not found",
+			semver:            version.Semver{Major: intToUnsigned(1), Minor: intToUnsigned(30)},
+			expecectedVersion: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testTitle, func(t *testing.T) {
+			fileHelpers := &testutils.FakeFilesHelper{}
+			clientAPI := testutils.FakeGoClientAPI{}
+			installer := &testutils.FakeInstaller{}
+			log := logger.New(&testutils.FakeStdout{}, nil)
+
+			versioner := version.New(fileHelpers, clientAPI, installer, log)
+
+			res := versioner.FindVersionBasedOnSemverName(versions, &tc.semver)
+
+			if !cmp.Equal(res, tc.expecectedVersion) {
+				t.Errorf("Wrong array received, got=%s", cmp.Diff(res, tc.expecectedVersion))
+			}
+		})
+	}
+}

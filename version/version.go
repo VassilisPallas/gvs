@@ -45,6 +45,12 @@ type Versioner interface {
 	// FilterAlreadyDownloadedVersions returns the versions that are already installed.
 	// FilterAlreadyDownloadedVersions must return a slice of string.
 	FilterAlreadyDownloadedVersions(evs []*ExtendedVersion) []string
+
+	// FindVersionBasedOnSemverName returns the version that is described in the semver.
+	// In case one of minor or patch version number is missing from the semver,
+	// FindVersionBasedOnSemverName should return the latest value of them.
+	// If the version is not found, FindVersionBasedOnSemverName should return nil.
+	FindVersionBasedOnSemverName(evs []*ExtendedVersion, version *Semver) *ExtendedVersion
 }
 
 // Version is the struct that implements the Versioner interface.
@@ -287,6 +293,23 @@ func (v Version) GetPromptVersions(evs []*ExtendedVersion, showAllVersions bool)
 		}
 	}
 	return filteredVersions
+}
+
+// FindVersionBasedOnSemverName returns the version that is described in the semver.
+// It compares the stringified semver version as a prefix for each one of the versions.
+// FindVersionBasedOnSemverName returns back the first occurrence of that version, which ensures the
+// latest version will be returned when minor or patch versions are not assigned to the semver.
+// If the version is not found, FindVersionBasedOnSemverName return back nil.
+func (v Version) FindVersionBasedOnSemverName(evs []*ExtendedVersion, version *Semver) *ExtendedVersion {
+	expectedVersion := version.GetVersion()
+
+	for _, ev := range evs {
+		if strings.HasPrefix(ev.getCleanVersionName(), expectedVersion) {
+			return ev
+		}
+	}
+
+	return nil
 }
 
 // New returns a Version instance that implements the Versioner interface.
