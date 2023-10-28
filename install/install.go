@@ -4,7 +4,6 @@ package install
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/VassilisPallas/gvs/api_client"
@@ -112,7 +111,6 @@ func (i Install) newVersionHandler(checksum string, goVersionName string) func(c
 
 		i.log.PrintMessage("Unzipping...\n")
 		if err = i.fileHelpers.UnzipTarFile(); err != nil {
-			fmt.Println(err)
 			return err
 		}
 

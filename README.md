@@ -21,6 +21,8 @@
     - [Use the dropdown to select a version](#use-the-dropdown-to-select-a-version)
     - [See all versions including release candidates (rc)](#see-all-versions-including-release-candidates-rc)
     - [Install latest version](#install-latest-version)
+    - [Install specific version](#install-specific-version)
+    - [Delete unused versions](#delete-unused-versions)
     - [Refresh version list](#refresh-version-list)
     - [Help](#help)
 - [Contributions](#contributions)
@@ -81,7 +83,7 @@ $ brew install VassilisPallas/tap/gvs
 Installation for other linux operation systems.
 
 ```sh
-$ curl -L https://raw.githubusercontent.com/VassilisPallas/gvs/main/install.sh | bash
+$ curl -L https://raw.githubusercontent.com/VassilisPallas/gvs/HEAD/install.sh | bash
 ```
 
 ### Install from source
@@ -150,6 +152,26 @@ Unzipping...
 Installing version...
 1.21.3 version is installed!
 ```
+
+### Install specific version
+
+In order to install a specific version without using the dropdown, use the `--install-version=value`.
+
+```sh
+$ gvs --install-version=1.21.3
+Downloading...
+Compare Checksums...
+Unzipping...
+Installing version...
+1.21.3 version is installed!
+```
+
+If the `Minor` version is not specified (`--install-version=1`), the latest `Minor` version is selected from the given `Major` version.
+
+If the `Patch` version is not specified (`--install-version=1.21`), the latest `Patch` version is selected from the given version.
+
+You can also pass Release Candidates, like `1.21rc2`.
+
 
 ### Delete unused versions
 
