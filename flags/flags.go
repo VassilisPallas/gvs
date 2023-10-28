@@ -7,7 +7,7 @@ import (
 	terminalColors "github.com/fatih/color"
 )
 
-// Flag contains the infromation for the flag.
+// Flag contains the information for the flag.
 type Flag struct {
 	// The name of the flag
 	name string
