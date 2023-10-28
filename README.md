@@ -22,6 +22,7 @@
     - [See all versions including release candidates (rc)](#see-all-versions-including-release-candidates-rc)
     - [Install latest version](#install-latest-version)
     - [Install specific version](#install-specific-version)
+    - [Install from mod file](#install-from-mod-file)
     - [Delete unused versions](#delete-unused-versions)
     - [Refresh version list](#refresh-version-list)
     - [Help](#help)
@@ -142,7 +143,7 @@ Use the arrow keys to navigate: ↓ ↑ → ←
 
 ### Install latest version
 
-In order to install the latest stable version, use the `--install-latest`.
+To install the latest stable version, use the `--install-latest`.
 
 ```sh
 $ gvs --install-latest
@@ -155,7 +156,7 @@ Installing version...
 
 ### Install specific version
 
-In order to install a specific version without using the dropdown, use the `--install-version=value`.
+To install a specific version without using the dropdown, use the `--install-version=value`.
 
 ```sh
 $ gvs --install-version=1.21.3
@@ -172,6 +173,18 @@ If the `Patch` version is not specified (`--install-version=1.21`), the latest `
 
 You can also pass Release Candidates, like `1.21rc2`.
 
+### Install from mod file
+
+You can also install a version that is specified in a go.mod file. You can use the flag `--from-mod`. This will look for any `go.mod` file under the same path `gvs` was executed on the terminal.
+
+```sh
+$ gvs --from-mod
+Downloading...
+Compare Checksums...
+Unzipping...
+Installing version...
+1.21.3 version is installed!
+```
 
 ### Delete unused versions
 
