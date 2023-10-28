@@ -16,6 +16,7 @@ import (
 	"github.com/VassilisPallas/gvs/pkg/unzip"
 	"github.com/VassilisPallas/gvs/version"
 	"github.com/manifoldco/promptui"
+	"golang.org/x/mod/modfile"
 )
 
 var (
@@ -23,6 +24,7 @@ var (
 	installLatest   = false
 	deleteUnused    = false
 	showAllVersions = false
+	fromModFile     = false
 	specificVersion = ""
 )
 
@@ -33,6 +35,7 @@ func parseFlags() {
 	set.FlagBool(&deleteUnused, "delete-unused", false, "Delete all unused versions that were installed before.")
 	set.FlagBool(&refreshVersions, "refresh-versions", false, "Fetch again go versions in case the cached ones are stale.")
 	set.FlagStr(&specificVersion, "install-version", "", "Pass the version you want to install instead of selecting from the dropdown. If you do not specify the minor or the patch version, the latest one will be selected.")
+	set.FlagBool(&fromModFile, "from-mod", false, "Install the version that will be found on the go.mod file. The go.mod file should be on the same path you run gvs. If the version in the go.mod file do not specify the minor or the patch version, the latest one will be selected.")
 
 	set.Parse()
 }
@@ -77,7 +80,47 @@ func main() {
 	}
 
 	switch {
+	case fromModFile:
+		log.Info("install version from go.mod file option selected")
+
+		buf, err := fs.ReadFile("./go.mod")
+		if err != nil {
+			log.PrintError(err.Error())
+			os.Exit(1)
+			return
+		}
+
+		f, err := modfile.Parse("go.mod", buf, nil)
+		if err != nil {
+			log.PrintError(err.Error())
+			os.Exit(1)
+			return
+		}
+
+		semver := &version.Semver{}
+		err = version.ParseSemver(f.Go.Version, semver)
+		if err != nil {
+			log.PrintError(err.Error())
+			os.Exit(1)
+			return
+		}
+
+		selectedVersion := versioner.FindVersionBasedOnSemverName(versions, semver)
+		if selectedVersion == nil {
+			log.PrintError("%s is not a valid version.", semver.GetVersion())
+			os.Exit(1)
+			return
+		}
+
+		err = versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
+		if err != nil {
+			log.PrintError(err.Error())
+			os.Exit(1)
+			return
+		}
 	case specificVersion != "":
+		log.Info("install specific version option selected")
+
 		semver := &version.Semver{}
 		err := version.ParseSemver(specificVersion, semver)
 		if err != nil {
@@ -94,7 +137,6 @@ func main() {
 		}
 
 		err = versioner.Install(selectedVersion, runtime.GOOS, runtime.GOARCH)
-
 		if err != nil {
 			log.PrintError(err.Error())
 			os.Exit(1)
@@ -116,7 +158,7 @@ func main() {
 			log.PrintMessage("Nothing to delete")
 		}
 	case installLatest:
-		log.Info("installLatest option selected")
+		log.Info("install latest option selected")
 
 		selectedIndex := versioner.GetLatestVersion(versions)
 		if selectedIndex == -1 {
