@@ -9,8 +9,11 @@ import (
 
 // Flag contains the information for the flag.
 type Flag struct {
-	// The name of the flag
+	// The name of the flag.
 	name string
+
+	// a short name for the flag.
+	shortName string
 
 	// A boolean that represents if the flag expects a value to be passed.
 	//
@@ -25,6 +28,15 @@ type Flag struct {
 // If the flag expects a value, the result will be like: --some-flag=value
 func (f Flag) getHelpName() string {
 	flagName := fmt.Sprintf("--%s", f.name)
+
+	if f.acceptsVale {
+		flagName += "=value"
+	}
+
+	if f.shortName != "" {
+		flagName += fmt.Sprintf(", -%s", f.shortName)
+	}
+
 	if f.acceptsVale {
 		flagName += "=value"
 	}
@@ -39,20 +51,28 @@ type FlagSet struct {
 	flags []Flag
 }
 
-// FlagBool defines a bool flag with specified name, default value, and usage string.
+// FlagBool defines a bool flag with specified name, short name (single character), default value, and usage string.
 // The argument p points to a bool variable in which to store the value of the flag.
 // FlagBool also appends the flag to the FlagSet array.
-func (s *FlagSet) FlagBool(p *bool, name string, value bool, usage string) {
-	s.flags = append(s.flags, Flag{name: name, acceptsVale: false})
+func (s *FlagSet) FlagBool(p *bool, name string, shortName rune, value bool, usage string) {
+	s.flags = append(s.flags, Flag{name: name, shortName: string(shortName), acceptsVale: false})
 	flag.BoolVar(p, name, value, usage)
+
+	if string(shortName) != "" {
+		flag.BoolVar(p, string(shortName), value, usage)
+	}
 }
 
-// StringVar defines a string flag with specified name, default value, and usage string.
+// StringVar defines a string flag with specified name, short name (single character), default value, and usage string.
 // The argument p points to a string variable in which to store the value of the flag.
 // FlagBool also appends the flag to the FlagSet array.
-func (s *FlagSet) FlagStr(p *string, name string, value string, usage string) {
-	s.flags = append(s.flags, Flag{name: name, acceptsVale: true})
+func (s *FlagSet) FlagStr(p *string, name string, shortName rune, value string, usage string) {
+	s.flags = append(s.flags, Flag{name: name, shortName: string(shortName), acceptsVale: true})
 	flag.StringVar(p, name, value, usage)
+
+	if string(shortName) != "" {
+		flag.StringVar(p, string(shortName), value, usage)
+	}
 }
 
 // printSynopsis returns back all the available flags without any description.

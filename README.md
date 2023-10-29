@@ -156,7 +156,7 @@ Installing version...
 
 ### Install specific version
 
-To install a specific version without using the dropdown, use the `--install-version=value`.
+To install a specific version without using the dropdown, use the `--install-version=value` flag.
 
 ```sh
 $ gvs --install-version=1.21.3
@@ -190,10 +190,24 @@ Installing version...
 
 Every time you install a new version, gvs keeps the previous installed versions, so you can easily change between them. If you want to delete all the unused versions and keep only the current one, use the `--delete-unused` flag.
 
-In the below example, the versions `1.20` and `1.19` are previously installed, and since they are not used (neither of them is the current version you use), they will be deleted.
+In the below example, the versions `1.20` and `1.19` are previously installed, and since they are not used (neither of them is the current version you use), they will be deleted after installing the new version 1.21.2.
 
 ```sh
 $ gvs --delete-unused
+Use the arrow keys to navigate: ↓ ↑ → ←
+? Select go version: 
+    1.21.3
+  ▸ 1.21.2
+    1.21.1
+    1.21.0
+    1.20.10
+
+✔ 1.21.2
+Downloading...
+Compare Checksums...
+Unzipping...
+Installing version...
+1.21.2 version is installed!
 Deleting go1.20.
 go1.20 is deleted.
 Deleting go1.19.

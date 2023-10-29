@@ -972,3 +972,77 @@ func TestGetLatestCreatedGoVersionDirectory(t *testing.T) {
 		})
 	}
 }
+
+func TestReadVersionFromMod(t *testing.T) {
+	var file_bytes = []byte(`
+		module module_name
+
+		go 1.20
+
+		require (
+			foo/bar v1.2.3
+		)
+	`)
+
+	testCases := []struct {
+		testTitle       string
+		modFileBytes    []byte
+		modeFileError   error
+		expectedError   error
+		expectedVersion string
+	}{
+		{
+			testTitle:       "should return an error when reading the go.mod file returns an error",
+			modFileBytes:    nil,
+			modeFileError:   errors.New("some error while reading th go.mod file"),
+			expectedError:   errors.New("some error while reading th go.mod file"),
+			expectedVersion: "",
+		},
+		{
+			testTitle:       "should return an error when parsing the go.mod file returns an error",
+			modFileBytes:    []byte(`wrong`),
+			modeFileError:   nil,
+			expectedError:   errors.New("go.mod:1: unknown directive: wrong"),
+			expectedVersion: "",
+		},
+		{
+			testTitle:       "should return the version from go.mod",
+			modFileBytes:    file_bytes,
+			modeFileError:   nil,
+			expectedError:   nil,
+			expectedVersion: "1.20",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testTitle, func(t *testing.T) {
+			fs := testutils.FakeFileSystem{
+				HomeDir:       "/tmp",
+				ReadFileBytes: tc.modFileBytes,
+				ReadFileError: tc.modeFileError,
+			}
+
+			clock := testutils.FakeClock{
+				UseRealIsBefore: true,
+				UseRealIsAfter:  true,
+			}
+			fileHelper := createFileHelper(&testutils.FakeStdout{}, nil, fs, testutils.FakeUnzipper{}, clock)
+			goVersion, err := fileHelper.ReadVersionFromMod()
+
+			if tc.expectedError == nil && err != nil {
+				t.Errorf("error should be nil, instead got %q", err.Error())
+				return
+			}
+
+			if tc.expectedError != nil && err.Error() != tc.expectedError.Error() {
+				t.Errorf("error should be %q, instead got %q", tc.expectedError.Error(), err.Error())
+				return
+			}
+
+			if goVersion != tc.expectedVersion {
+				t.Errorf("the version should be %q, instead got %q", tc.expectedVersion, goVersion)
+				return
+			}
+		})
+	}
+}

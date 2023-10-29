@@ -14,7 +14,6 @@ Fixes https://github.com/VassilisPallas/gvs/issues
 
 Tests
 
-- [ ] I've added integration tests
 - [ ] I've added unit tests
 
 Documentation
