@@ -28,7 +28,7 @@ func (cli CLI) InstallVersion(goVersion string) error {
 	}
 
 	selectedVersion := cli.versioner.FindVersionBasedOnSemverName(cli.versions, semver)
-	if selectedVersion != nil {
+	if selectedVersion == nil {
 		return fmt.Errorf("%s is not a valid version", semver.GetVersion())
 	}
 
